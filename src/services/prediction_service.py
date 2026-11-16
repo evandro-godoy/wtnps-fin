@@ -7,10 +7,10 @@ from typing import Any
 import pandas as pd
 from pydantic import ValidationError
 
-from newapp.src.analysis.decision_strategy import (
+from src.analysis.decision_strategy import (
     DefaultDecisionValidationStrategy,
 )
-from newapp.src.schemas.monitor_payload import MonitorPayload
+from src.schemas.monitor_payload import MonitorPayload
 
 logger = logging.getLogger(__name__)
 

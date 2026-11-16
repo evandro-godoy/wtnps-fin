@@ -15,8 +15,8 @@ from pathlib import Path
 from typing import Optional, Dict, List, Tuple
 from datetime import datetime
 from threading import Lock
-from newapp.src.analysis.context_analyzer import MarketContextAnalyzer
-from newapp.src.data_handler.provider import get_default_provider
+from src.analysis.context_analyzer import MarketContextAnalyzer
+from src.data_handler.provider import get_default_provider
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class LegacyMonitorEngine:
     def __init__(self):
         """Initialize legacy monitor engine."""
         self.repo_root = self._get_repository_root()
-        self.models_dir = self.repo_root / 'newapp' / 'models'
+        self.models_dir = self.repo_root / 'models'
         
         # Initialize context analyzer (identical to legacy)
         self.context_analyzer = MarketContextAnalyzer(
@@ -53,16 +53,16 @@ class LegacyMonitorEngine:
         for parent in [current] + list(current.parents):
             if (parent / 'pyproject.toml').exists():
                 return parent
-        return Path(__file__).resolve().parents[3]
+        return Path(__file__).resolve().parents[2]
     
     def _load_strategy_class(self, strategy_name: str, module_name: str):
-        """Load strategy class from newapp.src.strategies."""
+        """Load strategy class from src.strategies."""
         cache_key = f"{module_name}.{strategy_name}"
         if hasattr(self, '_strategy_cache') and cache_key in self._strategy_cache:
             return self._strategy_cache[cache_key]
         
         try:
-            module_path = f"newapp.src.strategies.{module_name}"
+            module_path = f"src.strategies.{module_name}"
             module = __import__(module_path, fromlist=[strategy_name])
             strategy_class = getattr(module, strategy_name)
             

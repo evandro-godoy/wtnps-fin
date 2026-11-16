@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from newapp.src.live.rules.base import BaseDecisionRule
+from src.live.rules.base import BaseDecisionRule
 
 
 class RsiOverboughtOversoldRule(BaseDecisionRule):

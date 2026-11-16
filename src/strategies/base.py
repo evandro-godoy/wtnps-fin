@@ -1,4 +1,4 @@
-# newapp/src/strategies/base.py
+# src/strategies/base.py
 """Base strategy class for all trading strategies.
 
 This module defines the abstract interface that all strategies must implement.

@@ -19,8 +19,8 @@ from typing import Optional
 import pandas as pd
 from sqlalchemy.orm import Session
 
-from newapp.src.database.repository import AssetsRatesRepository
-from newapp.src.data_handler.provider import get_default_provider
+from src.database.repository import AssetsRatesRepository
+from src.data_handler.provider import get_default_provider
 
 logger = logging.getLogger(__name__)
 

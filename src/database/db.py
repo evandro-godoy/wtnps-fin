@@ -181,7 +181,7 @@ def init_database():
     engine = get_engine()
     
     # Import all models here to ensure they're registered
-    from newapp.src.database import models  # noqa: F401
+    from src.database import models  # noqa: F401
     
     Base.metadata.create_all(bind=engine)
     logger.info("Database schema initialized")

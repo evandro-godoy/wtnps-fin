@@ -1,4 +1,4 @@
-"""Canonical FastAPI entrypoint for newapp monolith."""
+"""Canonical FastAPI entrypoint for WTNPS Fin application."""
 from __future__ import annotations
 
 import logging
@@ -7,15 +7,15 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from newapp.configs.config import APP_NAME, APP_VERSION, HOST, LOG_FORMAT, LOG_LEVEL, PORT, RELOAD, STATIC_DIR
-from newapp.src.api.lifespan import app_lifespan
-from newapp.src.api.routers.backtest import map_timeframe_to_int
-from newapp.src.api.routers.backtest import router as backtest_router
-from newapp.src.api.routers.market_data import router as market_data_router
-from newapp.src.api.routers.monitor import router as monitor_router
-from newapp.src.api.routers.pages import router as pages_router
-from newapp.src.api.websockets.backtest_ws import router as backtest_ws_router
-from newapp.src.api.websockets.monitor_ws import router as monitor_ws_router
+from configs.config import APP_NAME, APP_VERSION, HOST, LOG_FORMAT, LOG_LEVEL, PORT, RELOAD, STATIC_DIR
+from src.api.lifespan import app_lifespan
+from src.api.routers.backtest import map_timeframe_to_int
+from src.api.routers.backtest import router as backtest_router
+from src.api.routers.market_data import router as market_data_router
+from src.api.routers.monitor import router as monitor_router
+from src.api.routers.pages import router as pages_router
+from src.api.websockets.backtest_ws import router as backtest_ws_router
+from src.api.websockets.monitor_ws import router as monitor_ws_router
 
 logging.basicConfig(level=getattr(logging, LOG_LEVEL), format=LOG_FORMAT)
 
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "newapp.src.api.main:app",
+        "src.api.main:app",
         host=HOST,
         port=PORT,
         reload=RELOAD,

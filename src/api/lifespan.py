@@ -7,14 +7,14 @@ import logging
 from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
 
-from newapp.configs.config import TEMPLATES_DIR
-from newapp.src.analysis.context_analyzer import MarketContextAnalyzer
-from newapp.src.api.state import AppStateContainer
-from newapp.src.data_handler.provider import get_default_provider
-from newapp.src.database import close_database, init_database
-from newapp.src.ml.legacy_monitor_engine import get_legacy_monitor_engine
-from newapp.src.ml.prediction_engine import get_prediction_engine
-from newapp.src.services.monitor_runtime import MonitorRuntime
+from configs.config import TEMPLATES_DIR
+from src.analysis.context_analyzer import MarketContextAnalyzer
+from src.api.state import AppStateContainer
+from src.data_handler.provider import get_default_provider
+from src.database import close_database, init_database
+from src.ml.legacy_monitor_engine import get_legacy_monitor_engine
+from src.ml.prediction_engine import get_prediction_engine
+from src.services.monitor_runtime import MonitorRuntime
 
 logger = logging.getLogger(__name__)
 

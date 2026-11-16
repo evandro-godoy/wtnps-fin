@@ -1,7 +1,7 @@
-"""ML Prediction Engine - Integrates newapp trained models for real predictions.
+"""ML Prediction Engine - Integrates project trained models for real predictions.
 
-Loads LSTM/DRL models from newapp/models/ directory and generates trading signals
-using the newapp strategy classes with real-time data.
+Loads LSTM/DRL models from models/ directory and generates trading signals
+using the project strategy classes with real-time data.
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ _strategy_cache: Dict[str, any] = {}
 
 
 def _load_strategy_class(strategy_name: str, module_name: str):
-    """Load strategy class from newapp.src.strategies.
+    """Load strategy class from src.strategies.
     
     Args:
         strategy_name: Class name (e.g., "LSTMVolatilityStrategy")
@@ -33,7 +33,7 @@ def _load_strategy_class(strategy_name: str, module_name: str):
         return _strategy_cache[cache_key]
     
     try:
-        module_path = f"newapp.src.strategies.{module_name}"
+        module_path = f"src.strategies.{module_name}"
         module = __import__(module_path, fromlist=[strategy_name])
         strategy_class = getattr(module, strategy_name)
         _strategy_cache[cache_key] = strategy_class
@@ -50,16 +50,16 @@ def _get_repository_root() -> Path:
     for parent in [current] + list(current.parents):
         if (parent / 'pyproject.toml').exists():
             return parent
-    # Fallback to 3 levels up from newapp/src/ml/
-    return Path(__file__).resolve().parents[3]
+    # Fallback to the repository root from src/ml/.
+    return Path(__file__).resolve().parents[2]
 
 
 class MLPredictionEngine:
-    """Engine for generating ML predictions using newapp trained models.
+    """Engine for generating ML predictions using project trained models.
     
     Features:
-    - Loads LSTM/DRL models from newapp/models/ directory
-    - Uses newapp strategy classes for feature engineering
+    - Loads LSTM/DRL models from models/ directory
+    - Uses project strategy classes for feature engineering
     - Returns signals with probabilities and technical indicators
     - Thread-safe (stateless predictions)
     """
@@ -68,10 +68,10 @@ class MLPredictionEngine:
         """Initialize prediction engine.
         
         Args:
-            models_dir: Path to models directory (default: newapp/models/)
+            models_dir: Path to models directory (default: models/)
         """
         self.repo_root = _get_repository_root()
-        self.models_dir = models_dir or (self.repo_root / 'newapp' / 'models')
+        self.models_dir = models_dir or (self.repo_root / 'models')
         
         # Cache for loaded models {"SYMBOL_STRATEGY_TIMEFRAME": model}
         self._model_cache: Dict[str, Tuple[any, any, Dict]] = {}
@@ -132,7 +132,7 @@ class MLPredictionEngine:
         module_name: str = "lstm_volatility",
         count: int = 10
     ) -> List[Dict]:
-        """Generate predictions for recent COMPLETED candles using newapp models.
+        """Generate predictions for recent COMPLETED candles using project models.
         
         IMPORTANT: Excludes the last candle (currently in formation) from predictions
         to ensure we only predict on closed candles with final prices.
@@ -271,7 +271,7 @@ class MLPredictionEngine:
             List of predictions (same format as predict_batch)
         """
         # Get latest data from hybrid provider
-        from newapp.src.data_handler.provider import get_default_provider
+        from src.data_handler.provider import get_default_provider
         
         provider = get_default_provider()
         # Request more candles to ensure LSTM has enough lookback

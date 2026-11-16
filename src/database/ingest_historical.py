@@ -4,7 +4,7 @@ Fetches OHLCV data from configured provider (MetaTrader5 or fallback synthetic) 
 persists into SQLite/SQL Server through AssetsRatesRepository with partial immutability.
 
 Usage (PowerShell):
-    poetry run python newapp/src/database/ingest_historical.py --symbol WDO$ --timeframe M5 --start 2024-01-01 --end 2024-01-10
+    poetry run python -m src.database.ingest_historical --symbol WDO$ --timeframe M5 --start 2024-01-01 --end 2024-01-10
 
 Environment variables:
     WTNPS_DB_BACKEND      -> 'sqlite' (default) or 'sqlserver'
@@ -23,13 +23,13 @@ import sys
 import pandas as pd
 
 # Ensure project root is on sys.path when executed as a script
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from newapp.src.database.db import get_db, init_database
-from newapp.src.database.repository import AssetsRatesRepository
-from newapp.src.data_handler.provider import MetaTraderProvider
+from src.database.db import get_db, init_database
+from src.database.repository import AssetsRatesRepository
+from src.data_handler.provider import MetaTraderProvider
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - [%(name)s] %(message)s')
@@ -74,7 +74,7 @@ def enrich_indicators(df: pd.DataFrame) -> pd.DataFrame:
     Adds columns: ema_9, sma_20, sma_50, sma_200.
     Skips recalculation if column already exists.
     """
-    from newapp.src.utils.indicators import enrich_indicators_from_close
+    from src.utils.indicators import enrich_indicators_from_close
     return enrich_indicators_from_close(df, overwrite=False)
 
 # ---------------------------------------------------------------------------

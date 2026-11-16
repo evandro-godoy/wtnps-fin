@@ -13,7 +13,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from newapp.src.database.db import Base
+from src.database.db import Base
 
 class AssetsRates(Base):
     """Rates candlestick data table.

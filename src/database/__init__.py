@@ -1,8 +1,8 @@
-"""Database package for newapp.
+"""Database package for the WTNPS Fin project.
 
 Provides database models, session management, and CRUD operations.
 """
-from newapp.src.database.db import (
+from src.database.db import (
     get_engine,
     get_db,
     get_session_factory,
@@ -11,7 +11,7 @@ from newapp.src.database.db import (
     Base,
 )
 
-from newapp.src.database.models import (
+from src.database.models import (
     OHLCVData,
     TechnicalIndicators,
     MarketAnalysis,

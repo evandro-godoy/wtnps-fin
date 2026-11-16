@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import Request, WebSocket
 
-from newapp.src.api.state import AppStateContainer
+from src.api.state import AppStateContainer
 
 
 def get_state_from_request(request: Request) -> AppStateContainer:

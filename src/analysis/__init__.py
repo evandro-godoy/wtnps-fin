@@ -1,1 +1,1 @@
-"""Analysis module for newapp web application."""
+"""Analysis module for WTNPS Fin application."""

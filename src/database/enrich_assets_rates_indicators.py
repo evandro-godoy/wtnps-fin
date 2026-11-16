@@ -5,8 +5,8 @@ OHLCV values. Supports overwrite mode to recalculate all indicators or default
 mode that fills only null/zero values.
 
 Usage:
-    poetry run python newapp\src\database\enrich_assets_rates_indicators.py --symbol WDO$ --timeframe M5
-    poetry run python newapp\src\database\enrich_assets_rates_indicators.py --symbol WDO$ --timeframe M5 --overwrite
+    poetry run python -m src.database.enrich_assets_rates_indicators --symbol WDO$ --timeframe M5
+    poetry run python -m src.database.enrich_assets_rates_indicators --symbol WDO$ --timeframe M5 --overwrite
 
 Optional date filters (reduce processing window):
     --start 2024-01-01 --end 2024-06-01
@@ -21,10 +21,10 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from newapp.src.database.db import get_db, init_database
-from newapp.src.database.repository import AssetsRatesRepository
-from newapp.src.database.ingest_historical import map_timeframe_str_to_seconds
-from newapp.src.database.models import AssetsRates
+from src.database.db import get_db, init_database
+from src.database.repository import AssetsRatesRepository
+from src.database.ingest_historical import map_timeframe_str_to_seconds
+from src.database.models import AssetsRates
 from sqlalchemy import and_
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - [%(name)s] %(message)s')
@@ -75,7 +75,7 @@ def enrich(symbol: str, timeframe_str: str, start: Optional[str], end: Optional[
                 logger.info("No records found in specified range.")
                 return 0
             import pandas as pd
-            from newapp.src.utils.indicators import compute_indicator_dict
+            from src.utils.indicators import compute_indicator_dict
             
             df = pd.DataFrame([
                 {'time': r.timestamp, 'close': r.close} for r in records

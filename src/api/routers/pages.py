@@ -7,11 +7,11 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
-from newapp.configs.config import APP_VERSION, DEFAULT_LIMIT, DEFAULT_SYMBOL, DEFAULT_TIMEFRAME, MAX_LIMIT
-from newapp.src.api.dependencies import get_state_from_request
-from newapp.src.database import get_db
-from newapp.src.services.chart_service import build_chart_components
-from newapp.src.services.ohlc_service import get_recent_ohlc
+from configs.config import APP_VERSION, DEFAULT_LIMIT, DEFAULT_SYMBOL, DEFAULT_TIMEFRAME, MAX_LIMIT
+from src.api.dependencies import get_state_from_request
+from src.database import get_db
+from src.services.chart_service import build_chart_components
+from src.services.ohlc_service import get_recent_ohlc
 
 router = APIRouter()
 

@@ -1,4 +1,4 @@
-"""Backtest Engine for newapp.
+"""Backtest Engine for the WTNPS Fin project.
 
 Provides a lightweight, incremental backtesting workflow using existing
 AssetsRates data and centralized indicators.
@@ -30,7 +30,7 @@ except Exception:  # pragma: no cover
     keras = None  # Fallback if TF not available in environment
 from sqlalchemy.orm import Session
 
-from newapp.src.database.repository import (
+from src.database.repository import (
     AssetsRatesRepository,
     BacktestRunRepository,
     BacktestTradeRepository,
@@ -250,7 +250,7 @@ class BacktestEngine:
             return
         if self.config.strategy != "LSTMVolatilityStrategy":
             return
-        base = Path("newapp/models")
+        base = Path(__file__).resolve().parents[2] / "models"
         tf = self.config.timeframe_str
         symbol = self.config.symbol
         prefix = f"{symbol}_LSTMVolatilityStrategy_{tf}_prod"

@@ -4,12 +4,12 @@
 
 global_settings:
   # Diretório para salvar os modelos treinados. Os arquivos serão nomeados com o ticker.
-  model_directory: "c:/projects/wtnps-trade/models"
+  model_directory: "c:/projects/wtnps-fin/models"
 
   # Nomes dos arquivos de relatório (use {ticker} para substituição automática).
   reporting:
-    performance_report_path: "c:/projects/reports/{ticker}_performance_report.html"
-    trades_report_path: "c:/projects/reports/{ticker}_trades_report.html"
+    performance_report_path: "c:/projects/wtnps-fin/reports/{ticker}_performance_report.html"
+    trades_report_path: "c:/projects/wtnps-fin/reports/{ticker}_trades_report.html"
 
 
 # ===================================================================

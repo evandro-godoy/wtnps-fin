@@ -1,6 +1,6 @@
-"""Real-time Market Monitor for newapp.
+"""Real-time Market Monitor for the WTNPS Fin project.
 
-Modern implementation using existing newapp infrastructure:
+Modern implementation using existing project infrastructure:
 - HybridProvider for data fetching (MT5 → Cache → Synthetic)
 - MarketContextAnalyzer for technical analysis
 - Database repository for persistence
@@ -20,18 +20,18 @@ from typing import Optional, Dict, Any, Callable
 import pandas as pd
 import yaml
 
-from newapp.src.data_handler.provider import get_default_provider
-from newapp.src.analysis.context_analyzer import MarketContextAnalyzer
-from newapp.src.live.rules import BaseDecisionRule, RULE_REGISTRY
-from newapp.src.ml.legacy_monitor_engine import get_legacy_monitor_engine
-from newapp.src.services.prediction_service import build_canonical_monitor_payload
-from newapp.configs.config import DEFAULT_SYMBOL, DEFAULT_TIMEFRAME
+from src.data_handler.provider import get_default_provider
+from src.analysis.context_analyzer import MarketContextAnalyzer
+from src.live.rules import BaseDecisionRule, RULE_REGISTRY
+from src.ml.legacy_monitor_engine import get_legacy_monitor_engine
+from src.services.prediction_service import build_canonical_monitor_payload
+from configs.config import DEFAULT_SYMBOL, DEFAULT_TIMEFRAME
 
 logger = logging.getLogger(__name__)
 
 
 class RealtimeMarketMonitor:
-    """Real-time market monitoring engine for newapp.
+    """Real-time market monitoring engine for the WTNPS Fin project.
     
     Monitors market candles and generates trading signals using ML/technical analysis.
     Designed for async/WebSocket streaming to web clients.
@@ -72,7 +72,7 @@ class RealtimeMarketMonitor:
             enable_db_persistence: Save processed candles to database
         """
         logger.info("=" * 80)
-        logger.info("INITIALIZING REALTIME MARKET MONITOR (newapp)")
+        logger.info("INITIALIZING REALTIME MARKET MONITOR (WTNPS Fin)")
         logger.info("=" * 80)
         
         self.ticker = ticker
@@ -173,7 +173,7 @@ class RealtimeMarketMonitor:
         """Load monitor YAML config from project-level path."""
         possible_paths = [
             Path(self.config_path),
-            Path(__file__).resolve().parents[3] / "configs" / "main.yaml",
+            Path(__file__).resolve().parents[2] / "configs" / "main.yaml",
         ]
 
         for config_candidate in possible_paths:

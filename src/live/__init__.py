@@ -1,5 +1,5 @@
-"""Live trading and monitoring module for newapp."""
+"""Live trading and monitoring module for the WTNPS Fin project."""
 
-from newapp.src.live.monitor_engine import RealtimeMarketMonitor
+from src.live.monitor_engine import RealtimeMarketMonitor
 
 __all__ = ['RealtimeMarketMonitor']

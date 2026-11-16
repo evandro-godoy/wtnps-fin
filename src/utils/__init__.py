@@ -1,6 +1,6 @@
-"""Utility modules for newapp."""
+"""Utility modules for the WTNPS Fin project."""
 
-from newapp.src.utils.indicators import (
+from src.utils.indicators import (
     calculate_ema,
     calculate_sma,
     calculate_rsi,

@@ -7,7 +7,7 @@ import pandas as pd
 from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
 
-from newapp.src.data_handler.hybrid_data_loader import get_hybrid_candles
+from src.data_handler.hybrid_data_loader import get_hybrid_candles
 
 logger = logging.getLogger(__name__)
 

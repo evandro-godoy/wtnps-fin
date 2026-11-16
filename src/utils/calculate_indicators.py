@@ -4,9 +4,9 @@ This script uses MarketContextAnalyzer to calculate technical indicators
 (EMA, SMA, support/resistance levels) and updates AssetsRates table.
 
 Usage:
-    poetry run python newapp/calculate_indicators.py
-    poetry run python newapp/calculate_indicators.py --symbol WDO$ --timeframe 5
-    poetry run python newapp/calculate_indicators.py --all
+    poetry run python -m src.utils.calculate_indicators
+    poetry run python -m src.utils.calculate_indicators --symbol WDO$ --timeframe 5
+    poetry run python -m src.utils.calculate_indicators --all
 """
 from __future__ import annotations
 
@@ -16,9 +16,9 @@ from typing import Optional
 
 from sqlalchemy import text
 
-from newapp.src.database.db import get_engine, get_session
-from newapp.src.database.repository import AssetsRatesRepository
-from newapp.src.analysis.context_analyzer import MarketContextAnalyzer
+from src.database.db import get_engine, get_session
+from src.database.repository import AssetsRatesRepository
+from src.analysis.context_analyzer import MarketContextAnalyzer
 
 # Configure logging
 logging.basicConfig(

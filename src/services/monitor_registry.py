@@ -11,7 +11,7 @@ from __future__ import annotations
 import asyncio
 from typing import Dict
 
-from newapp.src.live.monitor_engine import RealtimeMarketMonitor
+from src.live.monitor_engine import RealtimeMarketMonitor
 
 
 class MonitorRegistry:

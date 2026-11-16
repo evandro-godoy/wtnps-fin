@@ -11,11 +11,11 @@ import pandas as pd
 from fastapi import WebSocket
 from pydantic import ValidationError
 
-from newapp.src.database.db import get_session_factory
-from newapp.src.database.repository import AssetsRatesRepository
-from newapp.src.live.monitor_engine import RealtimeMarketMonitor
-from newapp.src.schemas.monitor_payload import MonitorPayload
-from newapp.src.services.monitor_registry import MonitorRegistry
+from src.database.db import get_session_factory
+from src.database.repository import AssetsRatesRepository
+from src.live.monitor_engine import RealtimeMarketMonitor
+from src.schemas.monitor_payload import MonitorPayload
+from src.services.monitor_registry import MonitorRegistry
 
 logger = logging.getLogger(__name__)
 

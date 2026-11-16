@@ -6,10 +6,10 @@ from datetime import datetime, timezone
 import pandas as pd
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from newapp.configs.config import DEFAULT_SYMBOL, DEFAULT_TIMEFRAME
-from newapp.src.api.routers.backtest import map_timeframe_to_int
-from newapp.src.backtest.engine import BacktestConfig, BacktestEngine
-from newapp.src.database import get_session_factory
+from configs.config import DEFAULT_SYMBOL, DEFAULT_TIMEFRAME
+from src.api.routers.backtest import map_timeframe_to_int
+from src.backtest.engine import BacktestConfig, BacktestEngine
+from src.database import get_session_factory
 
 router = APIRouter()
 

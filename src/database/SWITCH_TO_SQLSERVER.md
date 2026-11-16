@@ -102,8 +102,8 @@ Se já tem dados no SQLite:
 poetry run python -c "
 import sqlite3
 import pandas as pd
-from newapp.src.database import get_session_factory
-from newapp.src.database.repository import OHLCVRepository
+from src.database import get_session_factory
+from src.database.repository import OHLCVRepository
 
 # Ler do SQLite
 conn = sqlite3.connect('wtnps_trade.db')

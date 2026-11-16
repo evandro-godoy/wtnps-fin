@@ -6,9 +6,9 @@ from fastapi import APIRouter, Body, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from newapp.configs.config import DEFAULT_SYMBOL, DEFAULT_TIMEFRAME
-from newapp.src.api.dependencies import get_state_from_request
-from newapp.src.services.prediction_service import get_monitor_predictions_payload
+from configs.config import DEFAULT_SYMBOL, DEFAULT_TIMEFRAME
+from src.api.dependencies import get_state_from_request
+from src.services.prediction_service import get_monitor_predictions_payload
 
 router = APIRouter()
 

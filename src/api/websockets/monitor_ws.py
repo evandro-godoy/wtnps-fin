@@ -6,7 +6,7 @@ from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from newapp.src.api.dependencies import get_state_from_websocket
+from src.api.dependencies import get_state_from_websocket
 
 router = APIRouter()
 

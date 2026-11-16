@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, desc
 from sqlalchemy.exc import IntegrityError
 
-from newapp.src.database.models import (
+from src.database.models import (
     OHLCVData,
     TechnicalIndicators,
     MarketAnalysis,
@@ -446,7 +446,7 @@ class AssetsRatesRepository:
             return 0
 
         # Build DataFrame for indicator computation
-        from newapp.src.utils.indicators import compute_indicator_dict
+        from src.utils.indicators import compute_indicator_dict
         
         df = pd.DataFrame([
             {
@@ -861,14 +861,14 @@ class DataProviderLogRepository:
             Number of records updated
             
         Example:
-            >>> from newapp.src.analysis.context_analyzer import MarketContextAnalyzer
+            >>> from src.analysis.context_analyzer import MarketContextAnalyzer
             >>> analyzer = MarketContextAnalyzer(ema_fast=9, sma_fast=20, sma_slow=50)
             >>> count = AssetsRatesRepository.update_indicators_with_analyzer(
             ...     db, "WDO$", 5, analyzer
             ... )
             >>> print(f"Updated {count} records with technical indicators")
         """
-        from newapp.src.analysis.context_analyzer import MarketContextAnalyzer
+        from src.analysis.context_analyzer import MarketContextAnalyzer
         
         # Create default analyzer if not provided
         if analyzer is None:
@@ -952,7 +952,7 @@ class BacktestRunRepository:
         strategy: str,
         initial_capital: float
     ) -> 'BacktestRun':
-        from newapp.src.database.models import BacktestRun
+        from src.database.models import BacktestRun
         run = BacktestRun(
             symbol=symbol,
             timeframe=timeframe,
@@ -980,7 +980,7 @@ class BacktestRunRepository:
         max_drawdown: float,
         avg_trade_return: float
     ) -> 'BacktestRun':
-        from newapp.src.database.models import BacktestRun
+        from src.database.models import BacktestRun
         run = db.query(BacktestRun).filter(BacktestRun.id == run_id).first()
         if not run:
             raise ValueError(f"BacktestRun id={run_id} not found")
@@ -1015,7 +1015,7 @@ class BacktestTradeRepository:
         volume: float | None,
         indicators_snapshot: Dict[str, Any] | None = None
     ) -> 'BacktestTrade':
-        from newapp.src.database.models import BacktestTrade
+        from src.database.models import BacktestTrade
         trade = BacktestTrade(
             run_id=run_id,
             symbol=symbol,
@@ -1043,7 +1043,7 @@ class BacktestTradeRepository:
         pnl: float,
         return_pct: float
     ) -> 'BacktestTrade':
-        from newapp.src.database.models import BacktestTrade
+        from src.database.models import BacktestTrade
         trade = db.query(BacktestTrade).filter(BacktestTrade.id == trade_id).first()
         if not trade:
             raise ValueError(f"BacktestTrade id={trade_id} not found")
@@ -1105,7 +1105,7 @@ class TrainingRunRepository:
         Returns:
             Created TrainingRun instance
         """
-        from newapp.src.database.models import TrainingRun
+        from src.database.models import TrainingRun
         
         # Extract metrics
         train_cm = train_metrics.get('confusion_matrix', {})
@@ -1178,7 +1178,7 @@ class TrainingRunRepository:
         Returns:
             Most recent TrainingRun or None
         """
-        from newapp.src.database.models import TrainingRun
+        from src.database.models import TrainingRun
         
         return (
             db.query(TrainingRun)
@@ -1211,7 +1211,7 @@ class TrainingRunRepository:
         Returns:
             List of TrainingRun instances ordered by creation date (newest first)
         """
-        from newapp.src.database.models import TrainingRun
+        from src.database.models import TrainingRun
         
         query = db.query(TrainingRun)
         

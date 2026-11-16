@@ -19,7 +19,7 @@ SQL Server não está instalado/disponível nesta máquina.
 
 **Implementação:**
 ```python
-# Alterar em newapp/src/database/db.py
+# Alterar em src/database/db.py
 def get_connection_string() -> str:
     return "sqlite:///./wtnps_trade.db"
 ```
@@ -71,7 +71,7 @@ Escolha uma opção:
    ```powershell
    # Instalar SQL Server Express
    # Depois executar setup
-   poetry run python newapp\setup_database.py
+   poetry run python src\database\setup_database.py
    ```
 
 3. **Híbrido (melhor dos dois mundos):**

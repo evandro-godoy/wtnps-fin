@@ -6,12 +6,12 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from newapp.configs.config import DEFAULT_LIMIT, DEFAULT_SYMBOL, DEFAULT_TIMEFRAME, MAX_LIMIT
-from newapp.src.api.dependencies import get_state_from_request
-from newapp.src.data_handler.hybrid_data_loader import get_hybrid_candles
-from newapp.src.database import get_db
-from newapp.src.database.repository import MarketAnalysisRepository
-from newapp.src.services.ohlc_service import build_ohlc_records
+from configs.config import DEFAULT_LIMIT, DEFAULT_SYMBOL, DEFAULT_TIMEFRAME, MAX_LIMIT
+from src.api.dependencies import get_state_from_request
+from src.data_handler.hybrid_data_loader import get_hybrid_candles
+from src.database import get_db
+from src.database.repository import MarketAnalysisRepository
+from src.services.ohlc_service import build_ohlc_records
 
 router = APIRouter()
 

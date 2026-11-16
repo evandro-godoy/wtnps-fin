@@ -4,11 +4,11 @@ from dataclasses import dataclass
 
 from fastapi.templating import Jinja2Templates
 
-from newapp.src.analysis.context_analyzer import MarketContextAnalyzer
-from newapp.src.data_handler.provider import BaseDataProvider
-from newapp.src.ml.prediction_engine import MLPredictionEngine
-from newapp.src.ml.legacy_monitor_engine import LegacyMonitorEngine
-from newapp.src.services.monitor_runtime import MonitorRuntime
+from src.analysis.context_analyzer import MarketContextAnalyzer
+from src.data_handler.provider import BaseDataProvider
+from src.ml.prediction_engine import MLPredictionEngine
+from src.ml.legacy_monitor_engine import LegacyMonitorEngine
+from src.services.monitor_runtime import MonitorRuntime
 
 
 @dataclass

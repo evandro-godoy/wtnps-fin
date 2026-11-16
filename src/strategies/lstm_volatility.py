@@ -1,4 +1,4 @@
-# newapp/src/strategies/lstm_volatility.py
+# src/strategies/lstm_volatility.py
 """LSTM Volatility Strategy for predicting volatility explosions.
 
 This module is identical to legacy src/strategies/lstm_volatility.py,
@@ -17,7 +17,7 @@ from tensorflow.keras.models import Sequential # type: ignore
 from tensorflow.keras.layers import LSTM, Dense, Dropout # type: ignore
 from tensorflow.keras.callbacks import EarlyStopping # type: ignore
 
-from newapp.src.strategies.base import BaseStrategy
+from src.strategies.base import BaseStrategy
 
 # --- Exceção Customizada para Erro de Shape ---
 

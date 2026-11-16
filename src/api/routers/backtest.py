@@ -7,10 +7,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from newapp.configs.config import DEFAULT_SYMBOL, DEFAULT_TIMEFRAME
-from newapp.src.backtest.engine import BacktestConfig, BacktestEngine
-from newapp.src.database import get_db
-from newapp.src.database.models import BacktestRun, BacktestTrade
+from configs.config import DEFAULT_SYMBOL, DEFAULT_TIMEFRAME
+from src.backtest.engine import BacktestConfig, BacktestEngine
+from src.database import get_db
+from src.database.models import BacktestRun, BacktestTrade
 
 router = APIRouter()
 

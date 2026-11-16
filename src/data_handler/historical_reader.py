@@ -12,10 +12,10 @@ from typing import Optional
 
 import pandas as pd
 
-from newapp.src.database.db import get_db, init_database
-from newapp.src.database.repository import AssetsRatesRepository
-from newapp.src.database.ingest_historical import map_timeframe_str_to_seconds, ingest_range
-from newapp.src.data_handler.provider import MetaTraderProvider
+from src.database.db import get_db, init_database
+from src.database.repository import AssetsRatesRepository
+from src.database.ingest_historical import map_timeframe_str_to_seconds, ingest_range
+from src.data_handler.provider import MetaTraderProvider
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - [%(name)s] %(message)s')
@@ -122,7 +122,7 @@ def load_range(
     missing_indicators = [c for c in ['ema_9', 'sma_20', 'sma_50', 'sma_200'] if c not in db_df.columns]
     if missing_indicators:
         logger.info("Indicators missing; performing selective enrich in-memory.")
-        from newapp.src.database.ingest_historical import enrich_indicators
+        from src.database.ingest_historical import enrich_indicators
         try:
             db_df = enrich_indicators(db_df)
         except Exception as e:

@@ -4,7 +4,7 @@ Provides trend analysis, strength indicators, support/resistance levels,
 and price action patterns for enriching ML signals in the web application.
 
 This module is a self-contained version adapted from src/analysis/context_analyzer.py
-for use in the newapp web interface.
+for use in the WTNPS Fin web interface.
 """
 from __future__ import annotations
 
@@ -162,7 +162,7 @@ class MarketContextAnalyzer:
         Returns:
             DataFrame with added indicator columns
         """
-        from newapp.src.utils.indicators import calculate_ema, calculate_sma, calculate_rsi
+        from src.utils.indicators import calculate_ema, calculate_sma, calculate_rsi
         
         # Fast EMA
         df['ema_fast'] = calculate_ema(df['close'], span=self.ema_fast, adjust=False)
@@ -435,8 +435,8 @@ def analyze_market_context(
         Analysis dictionary from MarketContextAnalyzer.analyze()
         
     Example:
-        >>> from newapp.data.provider import get_default_provider
-        >>> from newapp.analysis.context_analyzer import analyze_market_context
+        >>> from src.data_handler.provider import get_default_provider
+        >>> from src.analysis.context_analyzer import analyze_market_context
         >>> 
         >>> provider = get_default_provider()
         >>> df = provider.get_latest_candles('WDO$', 'M5', 500)

@@ -1,1 +1,1 @@
-"""Service layer for newapp monolith."""
+"""Service layer for WTNPS Fin application."""
