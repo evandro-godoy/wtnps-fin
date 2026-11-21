@@ -85,7 +85,7 @@ assets:
         period: 20        # Período da MA
 
   - ticker: "WIN$"
-    enabled: true
+    enabled: false
     
     strategies:
       - name: "LSTMVolatilityStrategy"
