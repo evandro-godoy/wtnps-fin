@@ -30,10 +30,10 @@ assets:
         data:
           start_date: "2022-05-01"
           end_date: "2026-11-01"
-          timeframe_model: "M5"  # Timeframe usado para treinar o modelo (M15 = ~96 períodos por dia)
+          timeframe_model: "M5"  # Timeframe usado para treinar o modelo (M5 = ~96 períodos por dia)
 
         strategy_params:
-          lookback: 108              # Janela de lookback (~1 dia de dados em M15)
+          lookback: 108              # Janela de lookback (~1 dia de dados em M5)
           lstm_units: 64             # Unidades LSTM
           dropout_rate: 0.2          # Taxa de dropout
           epochs: 30                 # Número de épocas para treinamento

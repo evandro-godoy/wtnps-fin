@@ -115,5 +115,5 @@ if __name__ == '__main__':
     
     print("\n" + "=" * 60)
     print("✅ Setup complete! Run the following to test:")
-    print("  poetry run python newapp\\tests\\test_database.py")
+    print("  poetry run python tests\\test_database.py")
     print("=" * 60)

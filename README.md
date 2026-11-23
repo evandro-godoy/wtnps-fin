@@ -66,6 +66,10 @@ O projeto utiliza as seguintes tecnologias principais:
 
 O uso do framework é dividido em três etapas principais:
 
+Os modelos do banco podem ser executados diretamente a partir da raiz do projeto
+com `poetry run python src/database/models.py`. Esse módulo apenas define os
+modelos; ele não cria o banco de dados.
+
 ### 1\. Configuração
 
 Tudo começa no arquivo `configs/main.yaml`. Antes de treinar ou executar, você deve definir:

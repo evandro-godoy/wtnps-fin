@@ -4,8 +4,17 @@ Defines database schema for OHLCV data, technical indicators, and analysis resul
 """
 from __future__ import annotations
 
+import sys
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
+
+if __name__ == '__main__':
+    if not __package__:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    # Import the canonical module once to avoid registering each table twice.
+    from src.database import models
+    sys.exit(0)
 
 from sqlalchemy import (
     Column, Integer, String, Float, DateTime, Index,
