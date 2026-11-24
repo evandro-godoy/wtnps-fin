@@ -27,6 +27,9 @@
         ws: null,
         wsReconnectTimer: null,
         audioCtx: null,
+        actionPending: false,
+        marketVersion: 0,
+        statusRequest: 0,
     };
 
     const el = (id) => document.getElementById(id);
@@ -54,10 +57,12 @@
     }
 
     async function loadInitialOhlc() {
-        const url = `/api/ohlc?symbol=${encodeURIComponent(state.symbol)}&timeframe=${encodeURIComponent(state.timeframe)}&limit=${state.ohlcLimit}`;
+        const version = state.marketVersion;
+        const url = `/api/ohlc?symbol=${encodeURIComponent(state.symbol)}&timeframe=${encodeURIComponent(state.timeframe)}&limit=${state.ohlcLimit}&include_indicators=true`;
         try {
             const data = await fetchJSON(url);
-            state.candles = (data.data || []).map((row) => ({
+            if (version !== state.marketVersion) return;
+            const candles = (data.data || []).map((row) => ({
                 time: normalizeTime(row.time),
                 open: row.open,
                 high: row.high,
@@ -65,20 +70,43 @@
                 close: row.close,
                 volume: row.volume,
             }));
+            const indicatorPoints = (data.data || []).map((row) => ({
+                time: normalizeTime(row.time),
+                ema_9: row.ema_9, ema_20: row.ema_20,
+                sma_20: row.sma_20, sma_50: row.sma_50, rsi_14: row.rsi_14,
+            }));
+            state.candles = mergePoints(candles, state.candles);
+            state.indicatorPoints = mergePoints(indicatorPoints, state.indicatorPoints);
+            if (data.warning) showMessage(data.warning, true);
             renderCandleChart();
         } catch (err) {
+            if (version !== state.marketVersion) return;
             console.error("Failed to load initial OHLC", err);
+            showMessage(`Erro ao carregar candles: ${err.message}`, true);
         }
     }
 
+    function mergePoints(historical, live) {
+        const byTime = new Map(historical.map((point) => [point.time, point]));
+        live.forEach((point) => byTime.set(point.time, point));
+        return Array.from(byTime.values())
+            .sort((a, b) => a.time.localeCompare(b.time))
+            .slice(-state.ohlcLimit);
+    }
+
     async function loadInitialPredictions() {
+        const version = state.marketVersion;
         const url = `/api/monitor-predictions?symbol=${encodeURIComponent(state.symbol)}&timeframe=${encodeURIComponent(state.timeframe)}&count=${state.predictionsCount}`;
         try {
             const data = await fetchJSON(url);
+            if (version !== state.marketVersion) return;
+            if (data.error) throw new Error(data.error);
             const predictions = data.predictions || [];
             predictions.forEach((payload) => ingestPayload(payload, { skipAlert: true }));
         } catch (err) {
+            if (version !== state.marketVersion) return;
             console.error("Failed to load initial predictions", err);
+            showMessage(`Erro ao carregar predições: ${err.message}`, true);
         }
     }
 
@@ -144,19 +172,28 @@
         const analysis = payload.analysis || {};
         const ml = payload.ml || {};
         const decision = payload.decision || {};
+        const latestTime = state.history.length ? normalizeTime(state.history[0].timestamp) : "";
+        const isLatest = !latestTime || timestamp > latestTime ||
+            (timestamp === latestTime && !opts.skipAlert);
 
-        state.indicatorPoints.push({
+        const point = {
             time: timestamp,
             ema_9: indicators.ema_9,
             ema_20: indicators.ema_20,
             sma_20: indicators.sma_20,
             sma_50: indicators.sma_50,
             rsi_14: indicators.rsi_14,
-        });
-        if (state.indicatorPoints.length > 500) {
-            state.indicatorPoints.shift();
+        };
+        // Historical predictions provide only a few points; the OHLC series
+        // already contains the warm-started values for the whole chart.
+        if (!opts.skipAlert) {
+            const index = state.indicatorPoints.findIndex((p) => p.time === timestamp);
+            if (index >= 0) state.indicatorPoints[index] = point;
+            else state.indicatorPoints.push(point);
+            state.indicatorPoints.sort((a, b) => a.time.localeCompare(b.time));
+            state.indicatorPoints = state.indicatorPoints.slice(-state.ohlcLimit);
         }
-        state.latestAnalysis = analysis;
+        if (isLatest) state.latestAnalysis = analysis;
 
         // Append/replace last candle so the candlestick chart stays live.
         // The REST /api/monitor-predictions reconstruction only carries a
@@ -174,16 +211,18 @@
             });
         }
 
-        state.history.unshift(payload);
-        if (state.history.length > 20) {
-            state.history.pop();
-        }
+        if (opts.skipAlert) state.history.push(payload);
+        else state.history.unshift(payload);
+        state.history.sort((a, b) => normalizeTime(b.timestamp).localeCompare(normalizeTime(a.timestamp)));
+        state.history = state.history.slice(0, 20);
 
-        updatePredictionCard(ml, decision);
-        updateContextCard(analysis, indicators);
+        if (isLatest) {
+            updatePredictionCard(ml, decision);
+            updateContextCard(analysis, indicators);
+            el("status-last-update-text").textContent = new Date(payload.timestamp).toLocaleTimeString("pt-BR");
+        }
         updateHistoryTable();
         renderCandleChart();
-        el("status-last-update-text").textContent = new Date(payload.timestamp).toLocaleTimeString("pt-BR");
 
         if (!opts.skipAlert) {
             maybeTriggerAlert(payload, ml, decision);
@@ -206,7 +245,13 @@
     // Renderização Plotly
     // ---------------------------------------------------------------
     function renderCandleChart() {
+        if (typeof Plotly === "undefined") {
+            showMessage("Erro ao carregar Plotly; verifique a conexão com a internet.", true);
+            return;
+        }
         if (!state.candles.length) {
+            Plotly.purge("candles-chart");
+            Plotly.purge("rsi-chart");
             return;
         }
         const times = state.candles.map((c) => c.time);
@@ -357,7 +402,8 @@
             const decision = payload.decision || {};
             const ohlcv = payload.ohlcv || {};
             const row = document.createElement("tr");
-            row.classList.add(ml.signal === "COMPRA" ? "row--buy" : ml.signal === "VENDA" ? "row--sell" : "");
+            if (ml.signal === "COMPRA") row.classList.add("row--buy");
+            else if (ml.signal === "VENDA") row.classList.add("row--sell");
             row.innerHTML = `
                 <td>${new Date(payload.timestamp).toLocaleTimeString("pt-BR")}</td>
                 <td>${(ohlcv.close || 0).toFixed(2)}</td>
@@ -440,13 +486,62 @@
     // Controles de UI
     // ---------------------------------------------------------------
     async function refreshStatus() {
+        const request = ++state.statusRequest;
         try {
             const data = await fetchJSON("/api/monitor/status");
+            if (request !== state.statusRequest) return;
             el("status-source-text").textContent = data.data_source || "—";
             el("status-monitors-text").textContent = data.active_monitors ?? 0;
             el("status-clients-text").textContent = data.websocket_connections ?? 0;
+            const monitor = data.monitors.find((item) =>
+                item.ticker.toUpperCase() === state.symbol.toUpperCase() &&
+                item.timeframe.toUpperCase() === state.timeframe.toUpperCase()
+            );
+            if (!state.actionPending) {
+                el("btn-start").disabled = !!monitor?.running;
+                el("btn-stop").disabled = !monitor?.running;
+            }
         } catch (err) {
+            if (request !== state.statusRequest) return;
             console.error("Failed to refresh monitor status", err);
+            el("btn-start").disabled = true;
+            el("btn-stop").disabled = true;
+            showMessage(`Erro ao consultar monitor: ${err.message}`, true);
+        }
+    }
+
+    function showMessage(message, isError = false) {
+        el("monitor-message").textContent = message;
+        el("monitor-message").classList.toggle("error", isError);
+    }
+
+    async function monitorAction(action) {
+        state.actionPending = true;
+        el("btn-start").disabled = true;
+        el("btn-stop").disabled = true;
+        const symbol = state.symbol;
+        const timeframe = state.timeframe;
+        try {
+            const response = await fetch("/api/monitor/" + action, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ticker: symbol, timeframe }),
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.detail || `HTTP ${response.status}`);
+            const messages = {
+                started: "Solicitação de início enviada.",
+                already_running: "Monitor já está em execução.",
+                stopped: "Monitor parado.",
+                not_found: "Monitor não encontrado.",
+            };
+            if (!(result.status in messages)) throw new Error(`Resposta inesperada: ${result.status}`);
+            showMessage(`${symbol} ${timeframe}: ${messages[result.status]}`, result.status === "not_found");
+        } catch (err) {
+            showMessage(`Erro ao ${action === "start" ? "iniciar" : "parar"} monitor: ${err.message}`, true);
+        } finally {
+            state.actionPending = false;
+            await refreshStatus();
         }
     }
 
@@ -454,24 +549,20 @@
         el("input-symbol").addEventListener("change", (e) => {
             state.symbol = e.target.value.trim().toUpperCase() || state.symbol;
             reloadMarketData();
+            refreshStatus();
         });
         el("input-timeframe").addEventListener("change", (e) => {
             state.timeframe = e.target.value;
             reloadMarketData();
+            refreshStatus();
         });
         el("input-frequency").addEventListener("change", (e) => {
             if (state.ws && state.ws.readyState === WebSocket.OPEN) {
                 state.ws.send(JSON.stringify({ action: "set_frequency", mode: e.target.value }));
             }
         });
-        el("btn-start").addEventListener("click", async () => {
-            await fetch(`/api/monitor/start?ticker=${encodeURIComponent(state.symbol)}&timeframe=${encodeURIComponent(state.timeframe)}`, { method: "POST" });
-            refreshStatus();
-        });
-        el("btn-stop").addEventListener("click", async () => {
-            await fetch(`/api/monitor/stop?ticker=${encodeURIComponent(state.symbol)}&timeframe=${encodeURIComponent(state.timeframe)}`, { method: "POST" });
-            refreshStatus();
-        });
+        el("btn-start").addEventListener("click", () => monitorAction("start"));
+        el("btn-stop").addEventListener("click", () => monitorAction("stop"));
         el("btn-sound").addEventListener("click", (e) => {
             state.soundEnabled = !state.soundEnabled;
             e.target.dataset.enabled = String(state.soundEnabled);
@@ -493,9 +584,19 @@
     }
 
     async function reloadMarketData() {
+        state.marketVersion += 1;
+        el("btn-start").disabled = true;
+        el("btn-stop").disabled = true;
         state.candles = [];
         state.indicatorPoints = [];
         state.history = [];
+        state.latestAnalysis = null;
+        updatePredictionCard({}, {});
+        updateContextCard({}, {});
+        el("status-last-update-text").textContent = "—";
+        el("alert-banner").classList.add("alert-banner--hidden");
+        renderCandleChart();
+        updateHistoryTable();
         await loadInitialOhlc();
         await loadInitialPredictions();
     }
@@ -505,6 +606,7 @@
     // ---------------------------------------------------------------
     async function init() {
         bindControls();
+        refreshStatus();
         await loadInitialOhlc();
         await loadInitialPredictions();
         connectWebSocket();

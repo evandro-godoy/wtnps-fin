@@ -58,6 +58,9 @@
 .btn--danger { background: var(--red); }
 .btn--toggle { background: #333a4d; }
 .btn--toggle[data-enabled="true"] { background: var(--accent); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+#monitor-message { margin: 0; color: var(--text-muted); }
+#monitor-message.error { color: #ff8a80; }
 
 .monitor-status {
     display: flex;

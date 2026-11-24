@@ -11,7 +11,9 @@ or wrapped by the Windows helper scripts under ``scripts/``.
 from __future__ import annotations
 
 import argparse
+import asyncio
 import logging
+import sys
 import threading
 import time
 import webbrowser
@@ -67,11 +69,15 @@ def main(argv: list[str] | None = None) -> None:
     if not args.no_browser:
         _open_browser_when_ready(args.host, args.port)
 
+    if sys.platform == "win32":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
     uvicorn.run(
         "src.api.main:app",
         host=args.host,
         port=args.port,
         reload=args.reload,
+        loop="none" if sys.platform == "win32" else "auto",
     )
 
 

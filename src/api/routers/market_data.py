@@ -12,6 +12,7 @@ from src.data_handler.hybrid_data_loader import get_hybrid_candles
 from src.database import get_db
 from src.database.repository import MarketAnalysisRepository
 from src.services.ohlc_service import build_ohlc_records
+from src.utils.indicators import add_basic_indicators
 
 router = APIRouter()
 
@@ -22,16 +23,39 @@ async def api_ohlc(
     symbol: str = DEFAULT_SYMBOL,
     timeframe: str = DEFAULT_TIMEFRAME,
     limit: int = DEFAULT_LIMIT,
+    include_indicators: bool = False,
     db: Session = Depends(get_db),
     background_tasks: BackgroundTasks = BackgroundTasks(),
 ) -> dict[str, Any]:
     if limit <= 0 or limit > MAX_LIMIT:
         raise HTTPException(status_code=400, detail=f"limit deve estar entre 1 e {MAX_LIMIT}")
 
-    df = get_hybrid_candles(db, symbol, timeframe, limit, background_tasks)
+    warmup = 200 if include_indicators else 0
+    if limit + warmup > MAX_LIMIT:
+        raise HTTPException(status_code=400, detail=f"limit com aquecimento não pode exceder {MAX_LIMIT}")
+    df = get_hybrid_candles(db, symbol, timeframe, limit + warmup, background_tasks)
+    if include_indicators and len(df) < limit + warmup:
+        provider_df = get_state_from_request(request).data_provider.get_latest_candles(
+            ticker=symbol, timeframe=timeframe, count=limit + warmup
+        )
+        if len(provider_df) > len(df):
+            df = provider_df
+    if include_indicators and not df.empty:
+        df = add_basic_indicators(
+            df.copy(), ema_periods=[9, 20], sma_periods=[20, 50],
+            rsi_period=14, overwrite=True,
+        )
+        df = df.iloc[warmup:].tail(limit)
     records = build_ohlc_records(df)
+    if include_indicators:
+        for record, (_, row) in zip(records, df.iterrows()):
+            for name in ("ema_9", "ema_20", "sma_20", "sma_50", "rsi"):
+                value = row[name]
+                record["rsi_14" if name == "rsi" else name] = (
+                    float(value) if value == value else None
+                )
 
-    return {
+    result = {
         "symbol": symbol,
         "timeframe": timeframe,
         "count": len(records),
@@ -39,6 +63,9 @@ async def api_ohlc(
         "data": records,
         "source": "Hybrid (DB + Provider)" if not df.empty else "No Data",
     }
+    if include_indicators and len(df) < limit:
+        result["warning"] = "Histórico insuficiente para exibir todos os candles com 200 candles de aquecimento."
+    return result
 
 
 @router.get("/api/analysis", response_class=JSONResponse)

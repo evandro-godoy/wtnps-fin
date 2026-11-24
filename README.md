@@ -211,3 +211,11 @@ Acesse `http://127.0.0.1:8100/monitor` para acompanhar em tempo real a coleta
 de dados do MetaTrader 5 (ou do fallback Cache/Synthetic), as predições da
 LSTM de picos de volatilidade e os alertas visuais/sonoros/desktop de
 sinalização ao trader.
+
+O gráfico utiliza até 150 candles visíveis e solicita outros 200 anteriores
+para aquecer as médias móveis. Se não houver histórico suficiente, exibe
+menos candles e informa a limitação. Os botões de início e parada refletem
+o estado do ativo e timeframe selecionados e mostram o resultado da operação.
+Na inicialização, apenas os ativos habilitados e com `live_trading.enabled`
+ativado em `configs/main.yaml` são iniciados automaticamente. Para obter
+predições de outro ativo/timeframe, é necessário ter seu modelo treinado.

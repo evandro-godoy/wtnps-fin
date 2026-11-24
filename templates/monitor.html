@@ -35,11 +35,12 @@
             </label>
         </div>
         <div class="toolbar-group toolbar-group--actions">
-            <button id="btn-start" class="btn btn--primary">▶ Iniciar monitor</button>
-            <button id="btn-stop" class="btn btn--danger">■ Parar monitor</button>
+            <button id="btn-start" class="btn btn--primary" disabled>▶ Iniciar monitor</button>
+            <button id="btn-stop" class="btn btn--danger" disabled>■ Parar monitor</button>
             <button id="btn-sound" class="btn btn--toggle" data-enabled="false">🔇 Som desativado</button>
             <button id="btn-notify" class="btn btn--toggle">🔔 Ativar notificações</button>
         </div>
+        <p id="monitor-message" role="status" aria-live="polite"></p>
     </div>
 
     <div class="monitor-status card">

@@ -5,12 +5,14 @@ import logging
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Iterable
+from typing import Any
 
 import pandas as pd
+import yaml
 from fastapi import WebSocket
 from pydantic import ValidationError
 
+from configs.config import APP_ROOT
 from src.data_handler.provider import get_default_provider
 from src.database.db import get_session_factory
 from src.database.repository import AssetsRatesRepository
@@ -66,13 +68,29 @@ class MonitorRuntime:
         return f"{ticker.upper()}_{timeframe.upper()}"
 
     async def start_default_monitors(self) -> list[dict[str, Any]]:
-        """Start canonical always-on monitors during FastAPI lifespan."""
-        defaults: Iterable[tuple[str, str]] = (("WDO$", "M5"), ("WIN$", "M5"))
+        """Start assets enabled for live monitoring in the project configuration."""
+        config_path = APP_ROOT / "configs" / "main.yaml"
+        with config_path.open(encoding="utf-8") as config_file:
+            config = yaml.safe_load(config_file)
+        if not isinstance(config, dict) or not isinstance(config.get("assets"), list):
+            raise ValueError(f"Invalid asset configuration: {config_path}")
+        configured: list[tuple[str, str]] = []
+        for asset in config["assets"]:
+            if not isinstance(asset, dict):
+                raise ValueError(f"Invalid asset entry in {config_path}")
+            if not asset.get("enabled"):
+                continue
+            live = asset.get("live_trading")
+            if not isinstance(live, dict) or not live.get("enabled"):
+                continue
+            ticker, timeframe = asset.get("ticker"), live.get("timeframe_str")
+            if not isinstance(ticker, str) or not ticker.strip() or not isinstance(timeframe, str) or not timeframe.strip():
+                raise ValueError(f"Invalid live monitor ticker or timeframe in {config_path}")
+            configured.append((ticker.strip(), timeframe.strip()))
+
         results: list[dict[str, Any]] = []
-
         await self._ensure_persist_worker()
-
-        for ticker, timeframe in defaults:
+        for ticker, timeframe in configured:
             result = await self.start_monitor(ticker=ticker, timeframe=timeframe)
             results.append(result)
 
