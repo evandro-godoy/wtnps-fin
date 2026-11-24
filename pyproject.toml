@@ -33,6 +33,11 @@ dependencies = [
     "pyodbc (>=5.5.0,<6.0.0)"
 ]
 
+[project.scripts]
+wtnps-monitor = "src.cli:main"
+
+[tool.poetry]
+packages = [{ include = "src" }, { include = "configs" }]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

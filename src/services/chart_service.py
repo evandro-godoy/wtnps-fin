@@ -1,25 +1,67 @@
 from __future__ import annotations
 
-import pandas as pd
+import logging
 
-from newapp.plotting import create_dashboard_chart
+import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+logger = logging.getLogger(__name__)
+
+_EMPTY_CHART_HTML = (
+    '<div class="chart-placeholder">Sem dados disponíveis para exibir o gráfico.</div>'
+)
 
 
 def build_chart_components(df: pd.DataFrame) -> tuple[str, str]:
-    """Build Bokeh script/div from OHLC dataframe."""
-    ohlc_data: list[dict[str, float | int | str]] = []
-    for ts, row in df.iterrows():
-        ohlc_data.append(
-            {
-                "time": ts.isoformat(),
-                "open": float(row["open"]),
-                "high": float(row["high"]),
-                "low": float(row["low"]),
-                "close": float(row["close"]),
-                "volume": int(row["volume"])
-                if "volume" in row and not pd.isna(row["volume"])
-                else 0,
-            }
+    """Build lightweight Plotly script/div components from an OHLC dataframe.
+
+    Returns a ``(script, div)`` tuple compatible with the legacy Bokeh-based
+    template contract: ``script`` is kept empty because Plotly embeds its
+    rendering `<script>` tag directly inside the returned ``div`` markup, and
+    ``div`` already contains a safe placeholder when no data is available.
+    """
+    if df is None or df.empty:
+        return "", _EMPTY_CHART_HTML
+
+    try:
+        fig = make_subplots(
+            rows=2,
+            cols=1,
+            shared_xaxes=True,
+            row_heights=[0.75, 0.25],
+            vertical_spacing=0.03,
         )
 
-    return create_dashboard_chart(ohlc_data)
+        fig.add_trace(
+            go.Candlestick(
+                x=df.index,
+                open=df["open"],
+                high=df["high"],
+                low=df["low"],
+                close=df["close"],
+                name="OHLC",
+            ),
+            row=1,
+            col=1,
+        )
+
+        if "volume" in df.columns:
+            fig.add_trace(
+                go.Bar(x=df.index, y=df["volume"], name="Volume", marker_color="#6c8ebf"),
+                row=2,
+                col=1,
+            )
+
+        fig.update_layout(
+            template="plotly_dark",
+            height=600,
+            margin=dict(l=40, r=20, t=30, b=30),
+            xaxis_rangeslider_visible=False,
+            showlegend=False,
+        )
+
+        return "", fig.to_html(full_html=False, include_plotlyjs="cdn")
+    except Exception as exc:  # pragma: no cover - defensive guard for /charts
+        logger.error("Failed to build chart components: %s", exc, exc_info=True)
+        return "", _EMPTY_CHART_HTML

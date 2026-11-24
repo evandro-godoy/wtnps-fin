@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Início{% endblock %}
+
+{% block content %}
+<section class="card">
+    <h1>WTNPS Fin &mdash; Painel de Trading Algorítmico</h1>
+    <p>
+        Bem-vindo à interface web do WTNPS Fin. Use a navegação acima para acessar
+        o monitor de mercado em tempo real, os gráficos de candles e o módulo de
+        backtest.
+    </p>
+    <ul class="home-links">
+        <li><a href="/monitor">📡 Monitor em tempo real (WebSocket + predições LSTM)</a></li>
+        <li><a href="/charts">📈 Gráficos OHLC</a></li>
+        <li><a href="/dashboard">📊 Dashboard consolidado</a></li>
+        <li><a href="/backtest">🧪 Backtest de estratégias</a></li>
+    </ul>
+</section>
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Monitor{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/monitor.css?v={{ version | default(0) }}">
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<section class="monitor">
+
+    <div id="alert-banner" class="alert-banner alert-banner--hidden" role="alert"></div>
+
+    <div class="monitor-toolbar card">
+        <div class="toolbar-group">
+            <label>Ativo
+                <input type="text" id="input-symbol" value="WDO$" autocomplete="off">
+            </label>
+            <label>Timeframe
+                <select id="input-timeframe">
+                    <option value="M1">M1</option>
+                    <option value="M5" selected>M5</option>
+                    <option value="M15">M15</option>
+                    <option value="M30">M30</option>
+                    <option value="H1">H1</option>
+                </select>
+            </label>
+            <label>Frequência WS
+                <select id="input-frequency">
+                    <option value="tick" selected>Tick (toda atualização)</option>
+                    <option value="close">Fechamento de candle</option>
+                    <option value="hybrid">Híbrido</option>
+                </select>
+            </label>
+        </div>
+        <div class="toolbar-group toolbar-group--actions">
+            <button id="btn-start" class="btn btn--primary">▶ Iniciar monitor</button>
+            <button id="btn-stop" class="btn btn--danger">■ Parar monitor</button>
+            <button id="btn-sound" class="btn btn--toggle" data-enabled="false">🔇 Som desativado</button>
+            <button id="btn-notify" class="btn btn--toggle">🔔 Ativar notificações</button>
+        </div>
+    </div>
+
+    <div class="monitor-status card">
+        <div class="status-pill" id="status-ws">
+            <span class="status-dot status-dot--offline"></span>
+            WebSocket: <strong id="status-ws-text">desconectado</strong>
+        </div>
+        <div class="status-pill" id="status-source">
+            Fonte de dados: <strong id="status-source-text">—</strong>
+        </div>
+        <div class="status-pill" id="status-monitors">
+            Monitores ativos: <strong id="status-monitors-text">0</strong>
+        </div>
+        <div class="status-pill" id="status-clients">
+            Clientes WS: <strong id="status-clients-text">0</strong>
+        </div>
+        <div class="status-pill" id="status-last-update">
+            Última atualização: <strong id="status-last-update-text">—</strong>
+        </div>
+    </div>
+
+    <div class="monitor-grid">
+        <div class="monitor-chart card">
+            <div id="candles-chart" class="chart-container"></div>
+            <div id="rsi-chart" class="chart-container chart-container--short"></div>
+        </div>
+
+        <div class="monitor-side">
+            <div class="card prediction-card" id="prediction-card">
+                <h2>Predição LSTM &mdash; Pico de Volatilidade</h2>
+                <div class="prediction-probability">
+                    <span id="prediction-probability-value">0%</span>
+                    <div class="probability-bar">
+                        <div id="prediction-probability-fill" class="probability-bar__fill"></div>
+                    </div>
+                </div>
+                <dl class="prediction-details">
+                    <dt>Sinal</dt><dd id="prediction-signal">HOLD</dd>
+                    <dt>Direção</dt><dd id="prediction-direction">HOLD</dd>
+                    <dt>Status</dt><dd id="prediction-status">NÃO VALIDADO</dd>
+                    <dt>Severidade</dt><dd id="prediction-severity">TICK</dd>
+                    <dt>Motivo</dt><dd id="prediction-reason">Sem validação</dd>
+                </dl>
+            </div>
+
+            <div class="card context-card">
+                <h2>Contexto Técnico</h2>
+                <dl class="prediction-details">
+                    <dt>Tendência</dt><dd id="context-trend">INDEFINIDO</dd>
+                    <dt>Força</dt><dd id="context-trend-strength">INDEFINIDO</dd>
+                    <dt>RSI (14)</dt><dd id="context-rsi">0.0</dd>
+                    <dt>Condição RSI</dt><dd id="context-rsi-condition">INDEFINIDO</dd>
+                    <dt>Padrão</dt><dd id="context-pattern">INDEFINIDO</dd>
+                    <dt>Suporte</dt><dd id="context-support">0.0</dd>
+                    <dt>Resistência</dt><dd id="context-resistance">0.0</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="card history-card">
+        <h2>Histórico de Sinais Recebidos</h2>
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Hora</th>
+                    <th>Fechamento</th>
+                    <th>Sinal</th>
+                    <th>Probabilidade</th>
+                    <th>Status</th>
+                    <th>Severidade</th>
+                </tr>
+            </thead>
+            <tbody id="history-table-body"></tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    window.WTNPS_MONITOR_CONFIG = {
+        defaultSymbol: "WDO$",
+        defaultTimeframe: "M5",
+        ohlcLimit: 150,
+        predictionsCount: 10,
+    };
+</script>
+<script src="/static/js/monitor.js?v={{ version | default(0) }}"></script>
+{% endblock %}

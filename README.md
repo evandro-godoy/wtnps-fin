@@ -165,3 +165,49 @@ Este modo permite visualizar dados dos ativos
     ```bash
     poetry install
     ```
+
+## Monitor em segundo plano (Windows)
+
+O monitor web (FastAPI + WebSocket `/ws/monitor` + tela `/monitor`) pode ser
+executado em primeiro ou segundo plano no Windows.
+
+### Primeiro plano (desenvolvimento)
+
+```powershell
+poetry run wtnps-monitor
+```
+
+Por padrão o servidor sobe em `http://127.0.0.1:8100` (ou no host/porta
+configurados em `configs/config.py` via `WTNPS_HOST`/`WTNPS_PORT`) e abre
+automaticamente a tela `/monitor` no navegador padrão. Use
+`poetry run wtnps-monitor --no-browser` para não abrir o navegador, ou
+`--reload` para desenvolvimento com autoreload.
+
+### Segundo plano (produção local)
+
+Para rodar o monitor em segundo plano, sem manter um terminal aberto:
+
+```powershell
+scripts\start_monitor.bat
+```
+
+ou diretamente via PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\start_background.ps1
+```
+
+Isso inicia `poetry run wtnps-monitor` como um processo oculto
+(`Start-Process -WindowStyle Hidden`), grava os logs em
+`logs\wtnps_monitor.log` e salva o PID em `logs\wtnps_monitor.pid`.
+
+Para encerrar o monitor em segundo plano:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\stop_background.ps1
+```
+
+Acesse `http://127.0.0.1:8100/monitor` para acompanhar em tempo real a coleta
+de dados do MetaTrader 5 (ou do fallback Cache/Synthetic), as predições da
+LSTM de picos de volatilidade e os alertas visuais/sonoros/desktop de
+sinalização ao trader.

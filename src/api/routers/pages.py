@@ -25,9 +25,9 @@ async def root_page() -> RedirectResponse:
 async def home_page(request: Request) -> HTMLResponse:
     state = get_state_from_request(request)
     return state.templates.TemplateResponse(
+        request,
         "home.html",
         {
-            "request": request,
             "app_version": APP_VERSION,
             "version": int(time.time()),
         },
@@ -55,9 +55,9 @@ async def charts_page(
     )
     script, div = build_chart_components(df)
     return state.templates.TemplateResponse(
+        request,
         "charts.html",
         {
-            "request": request,
             "symbol": symbol,
             "timeframe": timeframe,
             "limit": safe_limit,
@@ -90,9 +90,9 @@ async def charts_clean_page(
     )
     script, div = build_chart_components(df)
     return state.templates.TemplateResponse(
+        request,
         "charts_clean.html",
         {
-            "request": request,
             "symbol": symbol,
             "timeframe": timeframe,
             "limit": safe_limit,
@@ -113,9 +113,9 @@ async def home_clean_page() -> RedirectResponse:
 async def monitor_page(request: Request) -> HTMLResponse:
     state = get_state_from_request(request)
     return state.templates.TemplateResponse(
+        request,
         "monitor.html",
         {
-            "request": request,
             "app_version": APP_VERSION,
             "version": int(time.time()),
         },
@@ -139,9 +139,9 @@ async def dashboard_page(
     )
     script, div = build_chart_components(df)
     return state.templates.TemplateResponse(
+        request,
         "index.html",
         {
-            "request": request,
             "symbol": DEFAULT_SYMBOL,
             "timeframe": DEFAULT_TIMEFRAME,
             "limit": DEFAULT_LIMIT,
@@ -156,9 +156,9 @@ async def dashboard_page(
 async def analysis_page(request: Request) -> HTMLResponse:
     state = get_state_from_request(request)
     return state.templates.TemplateResponse(
+        request,
         "home.html",
         {
-            "request": request,
             "app_version": APP_VERSION,
             "version": int(time.time()),
         },
@@ -169,9 +169,9 @@ async def analysis_page(request: Request) -> HTMLResponse:
 async def settings_page(request: Request) -> HTMLResponse:
     state = get_state_from_request(request)
     return state.templates.TemplateResponse(
+        request,
         "home.html",
         {
-            "request": request,
             "app_version": APP_VERSION,
             "version": int(time.time()),
         },
@@ -184,9 +184,9 @@ async def backtest_page(request: Request) -> HTMLResponse:
     end_dt = datetime.now(timezone.utc).replace(microsecond=0, second=0)
     start_dt = end_dt - timedelta(days=30)
     return state.templates.TemplateResponse(
+        request,
         "backtest.html",
         {
-            "request": request,
             "app_version": APP_VERSION,
             "version": int(time.time()),
             "default_start": start_dt.isoformat(),

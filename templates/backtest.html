@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Backtest{% endblock %}
+
+{% block content %}
+<section class="card">
+    <h1>Backtest de Estratégias</h1>
+    <form id="backtest-form" class="form-grid">
+        <label>Símbolo
+            <input type="text" id="bt-symbol" value="WDO$">
+        </label>
+        <label>Timeframe
+            <input type="text" id="bt-timeframe" value="M5">
+        </label>
+        <label>Início
+            <input type="datetime-local" id="bt-start" value="{{ default_start }}">
+        </label>
+        <label>Fim
+            <input type="datetime-local" id="bt-end" value="{{ default_end }}">
+        </label>
+        <label>Capital inicial
+            <input type="number" id="bt-capital" value="100000">
+        </label>
+        <button type="submit">Executar Backtest</button>
+    </form>
+    <pre id="backtest-result" class="result-box">Aguardando execução...</pre>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('backtest-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const symbol = document.getElementById('bt-symbol').value;
+    const timeframe = document.getElementById('bt-timeframe').value;
+    const start = document.getElementById('bt-start').value;
+    const end = document.getElementById('bt-end').value;
+    const initial_capital = document.getElementById('bt-capital').value;
+    const resultBox = document.getElementById('backtest-result');
+    resultBox.textContent = 'Executando...';
+
+    const params = new URLSearchParams({ symbol, timeframe, initial_capital });
+    if (start) params.set('start', new Date(start).toISOString());
+    if (end) params.set('end', new Date(end).toISOString());
+
+    try {
+        const response = await fetch(`/api/backtest/run?${params.toString()}`, { method: 'POST' });
+        const data = await response.json();
+        resultBox.textContent = JSON.stringify(data, null, 2);
+    } catch (err) {
+        resultBox.textContent = `Erro: ${err}`;
+    }
+});
+</script>
+{% endblock %}

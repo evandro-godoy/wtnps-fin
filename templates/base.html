@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}WTNPS Fin{% endblock %} &middot; WTNPS Fin</title>
+    <link rel="stylesheet" href="/static/css/base.css?v={{ version | default(0) }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <header class="app-header">
+        <div class="app-header__brand">
+            <span class="app-header__logo">WTNPS</span>
+            <span class="app-header__version">v{{ app_version | default('0.0.0') }}</span>
+        </div>
+        <nav class="app-header__nav">
+            <a href="/home">Início</a>
+            <a href="/monitor">Monitor</a>
+            <a href="/charts">Gráficos</a>
+            <a href="/charts-clean">Gráficos (clean)</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/backtest">Backtest</a>
+        </nav>
+    </header>
+    <main class="app-main">
+        {% block content %}{% endblock %}
+    </main>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

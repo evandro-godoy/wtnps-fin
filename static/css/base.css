@@ -1,0 +1,132 @@
+:root {
+    color-scheme: dark;
+    --bg: #0f1117;
+    --bg-card: #171a24;
+    --border: #262b3a;
+    --text: #e4e6eb;
+    --text-muted: #9aa1b1;
+    --accent: #4f8cff;
+    --green: #2ecc71;
+    --red: #e74c3c;
+    --amber: #f5b041;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.5rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+}
+
+.app-header__brand {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.app-header__version {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.app-header__nav {
+    display: flex;
+    gap: 1.25rem;
+    font-size: 0.9rem;
+}
+
+.app-main {
+    padding: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.muted { color: var(--text-muted); }
+
+.home-links {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.chart-container { width: 100%; min-height: 420px; }
+.chart-placeholder {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.75rem;
+    align-items: end;
+}
+
+.form-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+input, select, button {
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+input, select {
+    background: #0b0d13;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 0.9rem;
+    background: var(--accent);
+    color: #fff;
+}
+
+button:hover { opacity: 0.9; }
+
+.result-box {
+    background: #0b0d13;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+    overflow-x: auto;
+    max-height: 400px;
+}

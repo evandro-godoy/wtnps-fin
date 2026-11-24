@@ -11,6 +11,7 @@ import pandas as pd
 from fastapi import WebSocket
 from pydantic import ValidationError
 
+from src.data_handler.provider import get_default_provider
 from src.database.db import get_session_factory
 from src.database.repository import AssetsRatesRepository
 from src.live.monitor_engine import RealtimeMarketMonitor
@@ -465,7 +466,20 @@ class MonitorRuntime:
                 and not self._persist_worker_task.done()
             ),
             "monitors": monitors_info,
+            "data_source": self._active_data_source(),
         }
+
+    @staticmethod
+    def _active_data_source() -> str:
+        """Report which provider in the existing hybrid fallback chain is active."""
+        try:
+            provider = get_default_provider()
+            mt5_provider = getattr(provider, "mt5_provider", None)
+            if mt5_provider is not None and mt5_provider.is_connected():
+                return "MT5"
+        except Exception as exc:
+            logger.warning("Failed to resolve active data source: %s", exc)
+        return "Cache/Synthetic"
 
     async def stop_all(self) -> None:
         """Stop all monitor tasks, flush persistence and close websockets."""

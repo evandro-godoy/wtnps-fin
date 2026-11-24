@@ -30,8 +30,16 @@ def build_canonical_monitor_payload(
     ml_probability: float,
     base_signal_valid: bool | None = None,
     base_validation_reason: str = "",
+    serialize_mode: str = "python",
 ) -> dict[str, Any]:
-    """Build canonical monitor payload shared by realtime WS and API endpoint."""
+    """Build canonical monitor payload shared by realtime WS and API endpoint.
+
+    ``serialize_mode`` controls the ``model_dump`` mode used for the returned
+    dict: ``"python"`` (default) keeps native types such as ``datetime`` for
+    the realtime pipeline (persistence consumes ``datetime`` objects
+    directly), while ``"json"`` returns a JSON-serializable dict, required by
+    REST endpoints that hand the payload straight to ``JSONResponse``.
+    """
     decision = _default_decision_strategy.validate(
         ml_signal=ml_signal,
         ml_direction=ml_direction,
@@ -58,7 +66,7 @@ def build_canonical_monitor_payload(
 
     try:
         validated_payload = MonitorPayload.from_runtime_payload(raw_payload)
-        return validated_payload.model_dump(mode="python", exclude_none=True)
+        return validated_payload.model_dump(mode=serialize_mode, exclude_none=True)
     except ValidationError as exc:
         logger.error(
             "monitor_payload_validation_failed source=prediction_service "
@@ -121,6 +129,7 @@ def _build_canonical_prediction_item(
         ml_probability=ml_probability,
         base_signal_valid=bool(pred_result.get("signal_valid", False)),
         base_validation_reason=str(pred_result.get("validation_reason", "")),
+        serialize_mode="json",
     )
     return payload
 

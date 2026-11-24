@@ -226,7 +226,10 @@ def get_hybrid_candles(
             #)
 
             # ajusta formato para mt5
-            start_date = latest_db_time.strftime('%Y-%m-%d') 
+            if df_db.empty:
+                start_date = (expected_latest - timedelta(days=30)).strftime('%Y-%m-%d')
+            else:
+                start_date = latest_db_time.strftime('%Y-%m-%d')
             end_date = expected_latest.strftime('%Y-%m-%d')
             df_provider = provider.get_data(symbol, start_date, end_date, timeframe_str)
             
@@ -398,7 +401,10 @@ def get_hybrid_candles_sync(
         
         try:
             # ajusta formato para mt5
-            start_date = latest_db_time.strftime('%Y-%m-%d') 
+            if df_db.empty:
+                start_date = (expected_latest - timedelta(days=30)).strftime('%Y-%m-%d')
+            else:
+                start_date = latest_db_time.strftime('%Y-%m-%d')
             end_date = expected_latest.strftime('%Y-%m-%d')
             
             df_provider = provider.get_data(symbol, start_date, end_date, timeframe_str)

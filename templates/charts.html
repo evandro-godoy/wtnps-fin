@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Gráficos{% endblock %}
+
+{% block content %}
+<section class="card">
+    <h1>Gráfico OHLC &mdash; {{ symbol }} @ {{ timeframe }}</h1>
+    <p class="muted">Últimos {{ limit }} candles.</p>
+    <div class="chart-container">
+        {{ bokeh_script | safe }}
+        {{ bokeh_div | safe }}
+    </div>
+</section>
+{% endblock %}
