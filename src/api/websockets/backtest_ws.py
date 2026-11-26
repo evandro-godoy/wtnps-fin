@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 
 import pandas as pd
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -10,6 +10,7 @@ from configs.config import DEFAULT_SYMBOL, DEFAULT_TIMEFRAME
 from src.api.routers.backtest import map_timeframe_to_int
 from src.backtest.engine import BacktestConfig, BacktestEngine
 from src.database import get_session_factory
+from src.utils.timezone import as_sao_paulo, sao_paulo_now
 
 router = APIRouter()
 
@@ -34,10 +35,10 @@ async def websocket_backtest(websocket: WebSocket):
         position_size = float(params.get("position_size", 1.0))
         update_interval = int(params.get("update_interval", 5))
 
-        now = datetime.now(timezone.utc)
-        end_dt = datetime.fromisoformat(end).replace(tzinfo=timezone.utc) if end else now
+        now = sao_paulo_now()
+        end_dt = as_sao_paulo(datetime.fromisoformat(end)) if end else now
         start_dt = (
-            datetime.fromisoformat(start).replace(tzinfo=timezone.utc)
+            as_sao_paulo(datetime.fromisoformat(start))
             if start
             else end_dt - pd.Timedelta(days=30)
         )

@@ -19,6 +19,7 @@ import time
 import webbrowser
 
 from configs.config import HOST, LOG_FORMAT, LOG_LEVEL, PORT
+from src.utils.timezone import configure_logging_timezone
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,7 @@ def main(argv: list[str] | None = None) -> None:
     import uvicorn
 
     args = _parse_args(argv)
+    configure_logging_timezone()
     logging.basicConfig(level=getattr(logging, LOG_LEVEL), format=LOG_FORMAT)
 
     if not args.no_browser:

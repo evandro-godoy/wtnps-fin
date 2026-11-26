@@ -34,15 +34,19 @@
 
     const el = (id) => document.getElementById(id);
 
-    /**
-     * Normalize any ISO-8601 timestamp variant (e.g. the trailing "Z" used by
-     * Pydantic JSON mode vs. the "+00:00" offset used by pandas) to the same
-     * canonical string so candle and indicator series align on the same
-     * Plotly category x-axis positions.
-     */
+    const marketTimeFormatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Sao_Paulo",
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        fractionalSecondDigits: 3, hourCycle: "h23", timeZoneName: "longOffset",
+    });
+
     function normalizeTime(value) {
         const parsed = new Date(value);
-        return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toISOString();
+        if (Number.isNaN(parsed.getTime())) return String(value);
+        const parts = Object.fromEntries(marketTimeFormatter.formatToParts(parsed).map((part) => [part.type, part.value]));
+        const offset = parts.timeZoneName.replace("GMT", "") || "+00:00";
+        return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}.${parts.fractionalSecond}${offset}`;
     }
 
     // ---------------------------------------------------------------
@@ -90,7 +94,7 @@
         const byTime = new Map(historical.map((point) => [point.time, point]));
         live.forEach((point) => byTime.set(point.time, point));
         return Array.from(byTime.values())
-            .sort((a, b) => a.time.localeCompare(b.time))
+            .sort((a, b) => Date.parse(a.time) - Date.parse(b.time))
             .slice(-state.ohlcLimit);
     }
 
@@ -173,7 +177,7 @@
         const ml = payload.ml || {};
         const decision = payload.decision || {};
         const latestTime = state.history.length ? normalizeTime(state.history[0].timestamp) : "";
-        const isLatest = !latestTime || timestamp > latestTime ||
+        const isLatest = !latestTime || Date.parse(timestamp) > Date.parse(latestTime) ||
             (timestamp === latestTime && !opts.skipAlert);
 
         const point = {
@@ -190,7 +194,7 @@
             const index = state.indicatorPoints.findIndex((p) => p.time === timestamp);
             if (index >= 0) state.indicatorPoints[index] = point;
             else state.indicatorPoints.push(point);
-            state.indicatorPoints.sort((a, b) => a.time.localeCompare(b.time));
+            state.indicatorPoints.sort((a, b) => Date.parse(a.time) - Date.parse(b.time));
             state.indicatorPoints = state.indicatorPoints.slice(-state.ohlcLimit);
         }
         if (isLatest) state.latestAnalysis = analysis;
@@ -213,13 +217,13 @@
 
         if (opts.skipAlert) state.history.push(payload);
         else state.history.unshift(payload);
-        state.history.sort((a, b) => normalizeTime(b.timestamp).localeCompare(normalizeTime(a.timestamp)));
+        state.history.sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
         state.history = state.history.slice(0, 20);
 
         if (isLatest) {
             updatePredictionCard(ml, decision);
             updateContextCard(analysis, indicators);
-            el("status-last-update-text").textContent = new Date(payload.timestamp).toLocaleTimeString("pt-BR");
+            el("status-last-update-text").textContent = new Date(payload.timestamp).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" });
         }
         updateHistoryTable();
         renderCandleChart();
@@ -405,7 +409,7 @@
             if (ml.signal === "COMPRA") row.classList.add("row--buy");
             else if (ml.signal === "VENDA") row.classList.add("row--sell");
             row.innerHTML = `
-                <td>${new Date(payload.timestamp).toLocaleTimeString("pt-BR")}</td>
+                <td>${new Date(payload.timestamp).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" })}</td>
                 <td>${(ohlcv.close || 0).toFixed(2)}</td>
                 <td>${ml.signal || "HOLD"}</td>
                 <td>${((ml.probability || 0) * 100).toFixed(1)}%</td>

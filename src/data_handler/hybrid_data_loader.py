@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 import asyncio
-from datetime import datetime, timezone, timedelta, time
+from datetime import datetime, timedelta, time
 from typing import Optional
 
 import pandas as pd
@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 
 from src.database.repository import AssetsRatesRepository
 from src.data_handler.provider import get_default_provider
+from src.utils.timezone import SAO_PAULO, as_sao_paulo, market_index, sao_paulo_now
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +38,8 @@ TIMEFRAME_TO_SECONDS = {
     "MN1": 2592000,
 }
 
-# Horário de funcionamento B3: 09:00-18:00 
-MARKET_OPEN_UTC = time(9, 0)   # 09:00 BRT
-MARKET_CLOSE_UTC = time(18, 25)  # 18:25 BRT
+MARKET_OPEN = time(9, 0)
+MARKET_CLOSE = time(18, 25)
 
 
 def _get_timeframe_int(timeframe_str: str) -> int:
@@ -55,26 +55,26 @@ def _get_timeframe_int(timeframe_str: str) -> int:
 
 
 def _is_market_open(dt: datetime) -> bool:
-    """Check if market is open at given UTC time.
+    """Check if market is open in São Paulo time.
     
-    B3 operates: 09:00-18:00 BRT (UTC-3) = 12:00-21:00 UTC, Mon-Fri.
+    Uses the configured 09:00-18:25 São Paulo session, Mon-Fri.
     
     Args:
-        dt: Datetime to check (UTC, tz-aware)
+        dt: Datetime to check
         
     Returns:
         True if market is open
     """
-    # Check weekday (0=Monday, 6=Sunday)
+    dt = as_sao_paulo(dt)
     if dt.weekday() >= 5:  # Saturday or Sunday
         return False
     
     current_time = dt.time()
-    return MARKET_OPEN_UTC <= current_time <= MARKET_CLOSE_UTC
+    return MARKET_OPEN <= current_time <= MARKET_CLOSE
 
 
 def _get_expected_latest_time(timeframe_str: str) -> datetime:
-    """Calculate expected latest candle time based on current UTC time.
+    """Calculate expected latest candle time based on São Paulo time.
     
     Rounds down to nearest timeframe boundary.
     If market is closed, returns last market close time.
@@ -83,31 +83,26 @@ def _get_expected_latest_time(timeframe_str: str) -> datetime:
         timeframe_str: Timeframe string
         
     Returns:
-        Expected latest candle timestamp (UTC, tz-aware)
+        Expected latest candle timestamp (São Paulo, tz-aware)
     """
-    now = datetime.now()
-    now = now.replace(tzinfo=timezone.utc)
+    now = sao_paulo_now()
     tf_seconds = _get_timeframe_int(timeframe_str)
     
     # If market is closed, use last close time (18:25 BRT)
     if not _is_market_open(now):
         # Get today's close or most recent close
-        close_today = datetime.combine(now.date(), MARKET_CLOSE_UTC, tzinfo=timezone.utc)
+        close_today = SAO_PAULO.localize(datetime.combine(now.date(), MARKET_CLOSE))
         
         if now < close_today:
-            # Before today's open, use yesterday's close
             close_today -= timedelta(days=1)
-            
-        # Align to timeframe boundary
-        timestamp_seconds = int(close_today.timestamp())
-        aligned_seconds = (timestamp_seconds // tf_seconds) * tf_seconds
-        return datetime.fromtimestamp(aligned_seconds, tz=timezone.utc)
-    
-    # Market is open: use current time aligned to timeframe
-    timestamp_seconds = int(now.timestamp())
-    aligned_seconds = (timestamp_seconds // tf_seconds) * tf_seconds
-    
-    return datetime.fromtimestamp(aligned_seconds, tz=timezone.utc)
+        while close_today.weekday() >= 5:
+            close_today -= timedelta(days=1)
+        now = close_today
+
+    epoch = datetime(1970, 1, 1)
+    wall_time = now.replace(tzinfo=None)
+    seconds = int((wall_time - epoch).total_seconds())
+    return SAO_PAULO.localize(epoch + timedelta(seconds=(seconds // tf_seconds) * tf_seconds))
 
 
 async def _persist_candles_async(
@@ -176,6 +171,8 @@ def get_hybrid_candles(
 
     # Step 1: Query database
     df_db = AssetsRatesRepository.get_all_rates(db, symbol, timeframe_int)
+    if not df_db.empty:
+        df_db.index = market_index(pd.DatetimeIndex(df_db.index))
     if not df_db.empty and len(df_db) > limit:
         df_db = df_db.tail(limit)  # Keep only last N candles
     
@@ -190,8 +187,7 @@ def get_hybrid_candles(
         latest_db_time = df_db.index[-1]
         
         # Ensure timezone-aware comparison
-        if latest_db_time.tzinfo is None:
-            latest_db_time = latest_db_time.replace(tzinfo=timezone.utc)
+        latest_db_time = as_sao_paulo(latest_db_time)
         
         time_diff = (expected_latest - latest_db_time).total_seconds()
         gap_threshold = timeframe_int * 2  # Allow 2 candles tolerance
@@ -234,14 +230,14 @@ def get_hybrid_candles(
             df_provider = provider.get_data(symbol, start_date, end_date, timeframe_str)
             
             if not df_provider.empty:
+                df_provider.index = market_index(pd.DatetimeIndex(df_provider.index))
                 # Identify truly new candles (not in DB)
                 if df_db.empty:
                     df_new = df_provider
                 else:
                     # Filter to only candles newer than latest DB entry
                     latest_db_time = df_db.index[-1]
-                    if latest_db_time.tzinfo is None:
-                        latest_db_time = latest_db_time.replace(tzinfo=timezone.utc)
+                    latest_db_time = as_sao_paulo(latest_db_time)
                     
                     df_new = df_provider[df_provider.index > latest_db_time]
                 
@@ -302,7 +298,9 @@ def get_hybrid_candles(
             if not df_provider_display.empty:
                 # Normalize tz
                 if df_provider_display.index.tz is None:
-                    df_provider_display.index = df_provider_display.index.tz_localize('UTC')
+                    df_provider_display.index = df_provider_display.index.tz_localize(SAO_PAULO)
+                else:
+                    df_provider_display.index = df_provider_display.index.tz_convert(SAO_PAULO)
                 df_result = df_provider_display.tail(limit)
                 result_latest = df_result.index[-1].strftime('%Y-%m-%dT%H:%M:%S') if not df_result.empty else 'N/A'
                 logger.info(f"📊 Displaying provider-only data to avoid gaps: {len(df_result)} candles (latest={result_latest})")
@@ -315,9 +313,9 @@ def get_hybrid_candles(
                     df_result = df_db.tail(limit)
                 else:
                     if df_db.index.tz is None and df_new.index.tz is not None:
-                        df_db.index = df_db.index.tz_localize('UTC')
+                        df_db.index = df_db.index.tz_localize(SAO_PAULO)
                     elif df_db.index.tz is not None and df_new.index.tz is None:
-                        df_new.index = df_new.index.tz_localize('UTC')
+                        df_new.index = df_new.index.tz_localize(SAO_PAULO)
                     df_combined = pd.concat([df_db, df_new])
                     df_combined = df_combined[~df_combined.index.duplicated(keep='last')]
                     df_result = df_combined.sort_index().tail(limit)
@@ -330,9 +328,9 @@ def get_hybrid_candles(
                 df_result = df_db.tail(limit)
             else:
                 if df_db.index.tz is None and df_new.index.tz is not None:
-                    df_db.index = df_db.index.tz_localize('UTC')
+                    df_db.index = df_db.index.tz_localize(SAO_PAULO)
                 elif df_db.index.tz is not None and df_new.index.tz is None:
-                    df_new.index = df_new.index.tz_localize('UTC')
+                    df_new.index = df_new.index.tz_localize(SAO_PAULO)
                 df_combined = pd.concat([df_db, df_new])
                 df_combined = df_combined[~df_combined.index.duplicated(keep='last')]
                 df_result = df_combined.sort_index().tail(limit)
@@ -344,9 +342,9 @@ def get_hybrid_candles(
             df_result = df_db.tail(limit)
         else:
             if df_db.index.tz is None and df_new.index.tz is not None:
-                df_db.index = df_db.index.tz_localize('UTC')
+                df_db.index = df_db.index.tz_localize(SAO_PAULO)
             elif df_db.index.tz is not None and df_new.index.tz is None:
-                df_new.index = df_new.index.tz_localize('UTC')
+                df_new.index = df_new.index.tz_localize(SAO_PAULO)
             df_combined = pd.concat([df_db, df_new])
             df_combined = df_combined[~df_combined.index.duplicated(keep='last')]
             df_result = df_combined.sort_index().tail(limit)
@@ -378,6 +376,8 @@ def get_hybrid_candles_sync(
     timeframe_int = _get_timeframe_int(timeframe_str)
     
     df_db = AssetsRatesRepository.get_all_rates(db, symbol, timeframe_int)
+    if not df_db.empty:
+        df_db.index = market_index(pd.DatetimeIndex(df_db.index))
     if not df_db.empty and len(df_db) > limit:
         df_db = df_db.tail(limit)
     expected_latest = _get_expected_latest_time(timeframe_str)
@@ -387,8 +387,7 @@ def get_hybrid_candles_sync(
         gap_detected = True
     else:
         latest_db_time = df_db.index[-1]
-        if latest_db_time.tzinfo is None:
-            latest_db_time = latest_db_time.replace(tzinfo=timezone.utc)
+        latest_db_time = as_sao_paulo(latest_db_time)
         
         time_diff = (expected_latest - latest_db_time).total_seconds()
         if time_diff > timeframe_int * 2:
@@ -410,12 +409,12 @@ def get_hybrid_candles_sync(
             df_provider = provider.get_data(symbol, start_date, end_date, timeframe_str)
             
             if not df_provider.empty:
+                df_provider.index = market_index(pd.DatetimeIndex(df_provider.index))
                 if df_db.empty:
                     df_new = df_provider
                 else:
                     latest_db_time = df_db.index[-1]
-                    if latest_db_time.tzinfo is None:
-                        latest_db_time = latest_db_time.replace(tzinfo=timezone.utc)
+                    latest_db_time = as_sao_paulo(latest_db_time)
                     df_new = df_provider[df_provider.index > latest_db_time]
                 
                 if not df_new.empty:
@@ -437,9 +436,9 @@ def get_hybrid_candles_sync(
     else:
         # Ensure consistent timezone before concatenating
         if df_db.index.tz is None and df_new.index.tz is not None:
-            df_db.index = df_db.index.tz_localize('UTC')
+            df_db.index = df_db.index.tz_localize(SAO_PAULO)
         elif df_db.index.tz is not None and df_new.index.tz is None:
-            df_new.index = df_new.index.tz_localize('UTC')
+            df_new.index = df_new.index.tz_localize(SAO_PAULO)
         
         df_combined = pd.concat([df_db, df_new])
         df_combined = df_combined[~df_combined.index.duplicated(keep='last')]

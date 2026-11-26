@@ -13,7 +13,7 @@ from __future__ import annotations
 import time
 import asyncio
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any, Callable
 
@@ -25,6 +25,7 @@ from src.analysis.context_analyzer import MarketContextAnalyzer
 from src.live.rules import BaseDecisionRule, RULE_REGISTRY
 from src.ml.legacy_monitor_engine import get_legacy_monitor_engine
 from src.services.prediction_service import build_canonical_monitor_payload
+from src.utils.timezone import sao_paulo_now
 from configs.config import DEFAULT_SYMBOL, DEFAULT_TIMEFRAME
 
 logger = logging.getLogger(__name__)
@@ -438,7 +439,7 @@ class RealtimeMarketMonitor:
         Returns:
             Seconds to sleep
         """
-        now = datetime.now()
+        now = sao_paulo_now()
         timeframe_seconds = self._timeframe_to_seconds(self.timeframe_str)
         
         # Calculate seconds since epoch

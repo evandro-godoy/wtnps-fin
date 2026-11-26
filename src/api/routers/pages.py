@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -12,6 +12,7 @@ from src.api.dependencies import get_state_from_request
 from src.database import get_db
 from src.services.chart_service import build_chart_components
 from src.services.ohlc_service import get_recent_ohlc
+from src.utils.timezone import sao_paulo_now
 
 router = APIRouter()
 
@@ -181,7 +182,7 @@ async def settings_page(request: Request) -> HTMLResponse:
 @router.get("/backtest", response_class=HTMLResponse)
 async def backtest_page(request: Request) -> HTMLResponse:
     state = get_state_from_request(request)
-    end_dt = datetime.now(timezone.utc).replace(microsecond=0, second=0)
+    end_dt = sao_paulo_now().replace(microsecond=0, second=0, tzinfo=None)
     start_dt = end_dt - timedelta(days=30)
     return state.templates.TemplateResponse(
         request,

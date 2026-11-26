@@ -23,6 +23,11 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from src.database.db import Base
+from src.utils.timezone import database_datetime, sao_paulo_now
+
+
+def _local_now() -> datetime:
+    return database_datetime(sao_paulo_now())
 
 class AssetsRates(Base):
     """Rates candlestick data table.
@@ -56,7 +61,7 @@ class AssetsRates(Base):
     sma_200 = Column(Float, nullable=True)
 
     # Metadata (existing legacy schema contains only created_at)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=_local_now, nullable=False)
     
     # Composite unique constraint
     __table_args__ = (
@@ -85,8 +90,8 @@ class OHLCVData(Base):
     volume = Column(Integer, nullable=False)
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=_local_now, nullable=False)
+    updated_at = Column(DateTime, default=_local_now, onupdate=_local_now)
     
     # Composite unique constraint
     __table_args__ = (
@@ -122,7 +127,7 @@ class TechnicalIndicators(Base):
     trend_strength = Column(Float, nullable=True)
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=_local_now, nullable=False)
     
     __table_args__ = (
         Index('idx_ti_symbol_timeframe_timestamp', 'symbol', 'timeframe', 'timestamp', unique=True),
@@ -166,7 +171,7 @@ class MarketAnalysis(Base):
     
     # Metadata
     candles_analyzed = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=_local_now, nullable=False)
     
     __table_args__ = (
         Index('idx_ma_symbol_timeframe_timestamp', 'symbol', 'timeframe', 'timestamp', unique=True),
@@ -188,7 +193,7 @@ class DataProviderLog(Base):
     timeframe = Column(String(10), nullable=False)
     provider_type = Column(String(20), nullable=False)  # MT5, Cache, Synthetic
     candles_count = Column(Integer, nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    timestamp = Column(DateTime, default=_local_now, nullable=False, index=True)
     
     # Optional metadata
     success = Column(Boolean, default=True, nullable=False)
@@ -221,7 +226,7 @@ class BacktestRun(Base):
     profit_factor = Column(Float, nullable=True)
     max_drawdown = Column(Float, nullable=True)
     avg_trade_return = Column(Float, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=_local_now, nullable=False)
 
     trades = relationship('BacktestTrade', back_populates='run', cascade='all, delete-orphan')
 
@@ -252,7 +257,7 @@ class BacktestTrade(Base):
     pnl = Column(Float, nullable=True)
     reason_exit = Column(String(50), nullable=True)  # STOP / TAKE / SIGNAL / END
     indicators_snapshot = Column(Text, nullable=True)  # JSON serialized indicators for audit/debug
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=_local_now, nullable=False)
 
     run = relationship('BacktestRun', back_populates='trades')
 
@@ -325,7 +330,7 @@ class TrainingRun(Base):
     # Metadata
     total_epochs = Column(Integer, nullable=True)
     training_duration_seconds = Column(Float, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(DateTime, default=_local_now, nullable=False, index=True)
     
     __table_args__ = (
         Index('idx_training_symbol_strategy_timeframe', 'symbol', 'strategy_name', 'timeframe_str'),

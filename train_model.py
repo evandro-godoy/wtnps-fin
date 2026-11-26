@@ -15,7 +15,6 @@ import json
 import base64
 import io
 import time
-from datetime import datetime
 from pathlib import Path
 import logging
 
@@ -37,8 +36,10 @@ from src.data_handler.hybrid_data_loader import get_default_provider
 from src.database.db import get_db
 from src.database.repository import TrainingRunRepository
 from src.strategies.base import BaseStrategy
+from src.utils.timezone import configure_logging_timezone, sao_paulo_now
 
 # Configuração básica do logging
+configure_logging_timezone()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - [%(name)s] %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -134,7 +135,7 @@ def save_reports(asset_symbol: str, strategy_name: str, timeframe_str: str, mode
                  train_probs: np.ndarray = None, y_train_aligned: np.ndarray = None,
                  test_probs: np.ndarray = None, y_test_aligned: np.ndarray = None):
     """Salva relatórios JSON, TXT e HTML para o modelo."""
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    timestamp = sao_paulo_now().strftime('%Y%m%d_%H%M%S')
     base_name = f"{asset_symbol}_{strategy_name}_{timeframe_str}_{timestamp}"
     json_path = REPORTS_DIR / f"{base_name}.json"
     txt_path = REPORTS_DIR / f"{base_name}.txt"
@@ -364,7 +365,7 @@ def train_all_models(config_path: str = 'configs/main.yaml'):
 
             # --- 3. Buscar dados usando HybridDataLoader ---
             start_date_str = data_config.get('start_date', '2022-01-01')
-            end_date_str = data_config.get('end_date', datetime.now().strftime('%Y-%m-%d'))
+            end_date_str = data_config.get('end_date', sao_paulo_now().strftime('%Y-%m-%d'))
             timeframe_str = data_config.get('timeframe_model', 'M5')
 
             try:

@@ -21,6 +21,9 @@ import os
 
 import pandas as pd
 import pytz
+from src.utils.timezone import (
+    SAO_PAULO, configure_logging_timezone, market_index, mt5_index, sao_paulo_now,
+)
 
 # Conditional MT5 import for cloud compatibility
 try:
@@ -31,6 +34,7 @@ except ImportError:
     MT5_AVAILABLE = False
 
 # Configure logging
+configure_logging_timezone()
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - [%(name)s] %(message)s'
@@ -42,8 +46,7 @@ CACHE_DIR = Path(__file__).parent.parent.parent / '.cache_data'
 os.makedirs(CACHE_DIR, exist_ok=True)
 logger.info(f"Cache directory initialized: {CACHE_DIR.resolve()}")
 
-# Timezone configuration (UTC for consistency)
-DESIRED_TIMEZONE = pytz.UTC
+DESIRED_TIMEZONE = SAO_PAULO
 
 
 class BaseDataProvider(ABC):
@@ -212,8 +215,8 @@ class MetaTraderProvider(BaseDataProvider):
         Args:
             ticker: Asset symbol
             timeframe: MT5 timeframe constant
-            start_dt: Start datetime (UTC timezone)
-            end_dt: End datetime (UTC timezone)
+            start_dt: MT5 server wall time encoded as UTC
+            end_dt: MT5 server wall time encoded as UTC
             chunk_size_days: Chunk size in days (default: 183)
 
         Returns:
@@ -304,6 +307,7 @@ class MetaTraderProvider(BaseDataProvider):
                 logger.info(f"Loading cached data: {cache_filename}")
                 data = pd.read_parquet(cache_filepath)
                 if not data.empty:
+                    data.index = mt5_index(data.index)
                     logger.info(f"Cache hit: {len(data)} candles loaded")
                     return data
             except Exception as e:
@@ -329,6 +333,7 @@ class MetaTraderProvider(BaseDataProvider):
         # Format DataFrame
         data['time'] = pd.to_datetime(data['time'], unit='s', utc=True)
         data.set_index('time', inplace=True)
+        data.index = mt5_index(data.index)
         data.rename(columns={
             'open': 'open',
             'high': 'high',
@@ -389,6 +394,7 @@ class MetaTraderProvider(BaseDataProvider):
         data = pd.DataFrame(rates)
         data['time'] = pd.to_datetime(data['time'], unit='s', utc=True)
         data.set_index('time', inplace=True)
+        data.index = mt5_index(data.index)
         data.rename(columns={
             'open': 'open',
             'high': 'high',
@@ -474,14 +480,13 @@ class CacheProvider(BaseDataProvider):
                 logger.error("Cache file index is not DatetimeIndex")
                 return pd.DataFrame()
 
-            if df.index.tz is None:
-                df.index = df.index.tz_localize('UTC')
+            df.index = mt5_index(df.index)
 
             # Filter by date range
             try:
-                start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-                end_dt = datetime.strptime(end_date, "%Y-%m-%d")
-                df = df[(df.index >= start_dt) & (df.index <= end_dt)]
+                start_dt = SAO_PAULO.localize(datetime.strptime(start_date, "%Y-%m-%d"))
+                end_dt = SAO_PAULO.localize(datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1))
+                df = df[(df.index >= start_dt) & (df.index < end_dt)]
             except ValueError:
                 logger.warning("Invalid date format, returning all cached data")
 
@@ -527,8 +532,7 @@ class CacheProvider(BaseDataProvider):
             if not isinstance(df.index, pd.DatetimeIndex):
                 return pd.DataFrame()
 
-            if df.index.tz is None:
-                df.index = df.index.tz_localize('UTC')
+            df.index = mt5_index(df.index)
 
             df = df.tail(count)
             logger.info(f"Loaded {len(df)} recent candles from cache")
@@ -570,7 +574,7 @@ class SyntheticProvider(BaseDataProvider):
         """
         rows = []
         current_price = self.base_price
-        now = datetime.utcnow()
+        now = sao_paulo_now()
 
         for i in range(count):
             ts = now - timedelta(minutes=interval_minutes * (count - i))
@@ -592,7 +596,7 @@ class SyntheticProvider(BaseDataProvider):
             current_price = close_price
 
         df = pd.DataFrame(rows).set_index('time')
-        df.index = pd.to_datetime(df.index, utc=True)
+        df.index = market_index(pd.DatetimeIndex(df.index))
         return df
 
     def get_data(

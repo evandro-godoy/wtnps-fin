@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
 from typing import Any
 
 import pandas as pd
@@ -11,6 +10,7 @@ from src.analysis.decision_strategy import (
     DefaultDecisionValidationStrategy,
 )
 from src.schemas.monitor_payload import MonitorPayload
+from src.utils.timezone import as_sao_paulo, sao_paulo_now
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +66,7 @@ def build_canonical_monitor_payload(
 
     try:
         validated_payload = MonitorPayload.from_runtime_payload(raw_payload)
+        validated_payload.timestamp = as_sao_paulo(validated_payload.timestamp)
         return validated_payload.model_dump(mode=serialize_mode, exclude_none=True)
     except ValidationError as exc:
         logger.error(
@@ -160,14 +161,10 @@ def get_monitor_predictions_payload(
                 "source": "legacy_monitor_engine",
             }
 
-        latest_candle_time = data.index[-1]
+        latest_candle_time = as_sao_paulo(data.index[-1])
         latest_candle_time_str = latest_candle_time.isoformat()
 
-        now_utc = datetime.now(timezone.utc)
-        if latest_candle_time.tzinfo is None:
-            latest_candle_time = latest_candle_time.replace(tzinfo=timezone.utc)
-
-        time_diff = (now_utc - latest_candle_time).total_seconds()
+        time_diff = (sao_paulo_now() - latest_candle_time).total_seconds()
         is_market_open = time_diff < 600
 
         predictions: list[dict[str, Any]] = []

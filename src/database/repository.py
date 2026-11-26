@@ -20,6 +20,7 @@ from src.database.models import (
     DataProviderLog,
     AssetsRates
 )
+from src.utils.timezone import database_datetime, market_index, sao_paulo_now
 
 def _map_trend_strength_to_float(strength_str: str | None) -> float | None:
     """Map textual trend strength to numeric value for database storage.
@@ -74,7 +75,9 @@ class AssetsRatesRepository:
             return 0
 
         # Remove duplicate timestamps inside incoming batch.
-        df_to_save = df[~df.index.duplicated(keep='last')].sort_index()
+        df_to_save = df.copy()
+        df_to_save.index = market_index(pd.DatetimeIndex(df_to_save.index)).tz_localize(None)
+        df_to_save = df_to_save[~df_to_save.index.duplicated(keep='last')].sort_index()
 
         timestamps = [ts.to_pydatetime() if hasattr(ts, 'to_pydatetime') else ts for ts in df_to_save.index]
         existing_rows = (
@@ -194,7 +197,7 @@ class AssetsRatesRepository:
                 existing.sma_200 = float(row['sma_200'])
 
         if hasattr(existing, 'updated_at'):
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = database_datetime(sao_paulo_now())
 
     @staticmethod
     def _save_rates_dataframe_conflict_safe(
@@ -302,6 +305,7 @@ class AssetsRatesRepository:
         
         df = pd.DataFrame(data)
         df.set_index('time', inplace=True)
+        df.index = market_index(pd.DatetimeIndex(df.index))
         return df        
 
     @staticmethod
@@ -330,8 +334,8 @@ class AssetsRatesRepository:
                 and_(
                     AssetsRates.symbol == symbol,
                     AssetsRates.timeframe == timeframe,
-                    AssetsRates.timestamp >= start_date,
-                    AssetsRates.timestamp <= end_date
+                    AssetsRates.timestamp >= database_datetime(start_date),
+                    AssetsRates.timestamp <= database_datetime(end_date)
                 )
             )
             .order_by(AssetsRates.timestamp)
@@ -354,6 +358,7 @@ class AssetsRatesRepository:
         
         df = pd.DataFrame(data)
         df.set_index('time', inplace=True)
+        df.index = market_index(pd.DatetimeIndex(df.index))
         return df        
 
     @staticmethod
@@ -382,8 +387,8 @@ class AssetsRatesRepository:
                 and_(
                     AssetsRates.symbol == symbol,
                     AssetsRates.timeframe == timeframe,
-                    AssetsRates.timestamp >= start_date,
-                    AssetsRates.timestamp <= end_date
+                    AssetsRates.timestamp >= database_datetime(start_date),
+                    AssetsRates.timestamp <= database_datetime(end_date)
                 )
             )
             .order_by(AssetsRates.timestamp)
@@ -411,6 +416,7 @@ class AssetsRatesRepository:
         
         df = pd.DataFrame(data)
         df.set_index('time', inplace=True)
+        df.index = market_index(pd.DatetimeIndex(df.index))
         return df     
 
     @staticmethod
@@ -520,6 +526,7 @@ class OHLCVRepository:
         count = 0
         
         for timestamp, row in df.iterrows():
+            timestamp = database_datetime(timestamp)
             # Check if record exists
             existing = db.query(OHLCVData).filter(
                 and_(
@@ -536,7 +543,7 @@ class OHLCVRepository:
                 existing.low = float(row['low'])
                 existing.close = float(row['close'])
                 existing.volume = int(row['volume']) if 'volume' in row else 0
-                existing.updated_at = datetime.utcnow()
+                existing.updated_at = database_datetime(sao_paulo_now())
             else:
                 # Insert new record
                 ohlcv = OHLCVData(
@@ -605,6 +612,7 @@ class OHLCVRepository:
         
         df = pd.DataFrame(data)
         df.set_index('time', inplace=True)
+        df.index = market_index(pd.DatetimeIndex(df.index))
         
         logger.info(f"Retrieved {len(df)} OHLCV records for {symbol} {timeframe}")
         return df
@@ -635,8 +643,8 @@ class OHLCVRepository:
                 and_(
                     OHLCVData.symbol == symbol,
                     OHLCVData.timeframe == timeframe,
-                    OHLCVData.timestamp >= start_date,
-                    OHLCVData.timestamp <= end_date
+                    OHLCVData.timestamp >= database_datetime(start_date),
+                    OHLCVData.timestamp <= database_datetime(end_date)
                 )
             )
             .order_by(OHLCVData.timestamp)
@@ -659,6 +667,7 @@ class OHLCVRepository:
         
         df = pd.DataFrame(data)
         df.set_index('time', inplace=True)
+        df.index = market_index(pd.DatetimeIndex(df.index))
         return df
 
 
@@ -689,6 +698,7 @@ class MarketAnalysisRepository:
         Returns:
             Created MarketAnalysis record
         """
+        timestamp = database_datetime(timestamp)
         # Check if record exists
         existing = db.query(MarketAnalysis).filter(
             and_(
@@ -920,7 +930,7 @@ class DataProviderLogRepository:
                 and_(
                     AssetsRates.symbol == symbol,
                     AssetsRates.timeframe == timeframe,
-                    AssetsRates.timestamp == timestamp
+                    AssetsRates.timestamp == database_datetime(timestamp)
                 )
             ).first()
             
@@ -931,7 +941,7 @@ class DataProviderLogRepository:
                 record.sma_50 = float(row.get('sma_slow', 0.0)) if pd.notna(row.get('sma_slow')) else None
                 record.support_level = bool(row.get('support_level', False))
                 record.resistance_level = bool(row.get('resistance_level', False))
-                record.updated_at = datetime.utcnow()
+                record.updated_at = database_datetime(sao_paulo_now())
                 count += 1
         
         db.commit()
@@ -956,8 +966,8 @@ class BacktestRunRepository:
         run = BacktestRun(
             symbol=symbol,
             timeframe=timeframe,
-            start_date=start_date,
-            end_date=end_date,
+            start_date=database_datetime(start_date),
+            end_date=database_datetime(end_date),
             strategy=strategy,
             initial_capital=initial_capital
         )
@@ -1020,7 +1030,7 @@ class BacktestTradeRepository:
             run_id=run_id,
             symbol=symbol,
             timeframe=timeframe,
-            entry_time=entry_time,
+            entry_time=database_datetime(entry_time),
             direction=direction,
             entry_price=entry_price,
             stop_loss=stop_loss,
@@ -1047,7 +1057,7 @@ class BacktestTradeRepository:
         trade = db.query(BacktestTrade).filter(BacktestTrade.id == trade_id).first()
         if not trade:
             raise ValueError(f"BacktestTrade id={trade_id} not found")
-        trade.exit_time = exit_time
+        trade.exit_time = database_datetime(exit_time)
         trade.exit_price = exit_price
         trade.reason_exit = reason_exit
         trade.pnl = pnl
@@ -1117,8 +1127,8 @@ class TrainingRunRepository:
             symbol=symbol,
             strategy_name=strategy_name,
             timeframe_str=timeframe_str,
-            start_date=start_date,
-            end_date=end_date,
+            start_date=database_datetime(start_date),
+            end_date=database_datetime(end_date),
             model_path_prefix=model_path_prefix,
             # Train metrics
             train_accuracy=train_metrics.get('accuracy'),

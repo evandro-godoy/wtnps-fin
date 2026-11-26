@@ -30,8 +30,10 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.database.db import get_db, init_database
 from src.database.repository import AssetsRatesRepository
 from src.data_handler.provider import MetaTraderProvider
+from src.utils.timezone import configure_logging_timezone, market_index
 
 logger = logging.getLogger(__name__)
+configure_logging_timezone()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - [%(name)s] %(message)s')
 
 # ---------------------------------------------------------------------------
@@ -90,7 +92,7 @@ def fetch_provider_data(symbol: str, timeframe_str: str, start: str, end: str) -
         start: Start date (YYYY-MM-DD).
         end: End date (YYYY-MM-DD).
     Returns:
-        DataFrame indexed by UTC timestamps.
+        DataFrame indexed by São Paulo timestamps.
     """
     provider = MetaTraderProvider()
     if not provider.is_connected():
@@ -108,10 +110,9 @@ def fetch_provider_data(symbol: str, timeframe_str: str, start: str, end: str) -
         logger.warning("Provider returned empty DataFrame.")
         return df
 
-    # Normalize index timezone: ensure naive UTC for DB
+    # Database timestamps are naive São Paulo wall times.
     if isinstance(df.index, pd.DatetimeIndex):
-        if df.index.tz is not None:
-            df.index = df.index.tz_convert('UTC').tz_localize(None)
+        df.index = market_index(df.index).tz_localize(None)
     return df
 
 # ---------------------------------------------------------------------------

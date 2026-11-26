@@ -26,7 +26,9 @@ from src.database.repository import AssetsRatesRepository
 from src.database.ingest_historical import map_timeframe_str_to_seconds
 from src.database.models import AssetsRates
 from sqlalchemy import and_
+from src.utils.timezone import configure_logging_timezone
 
+configure_logging_timezone()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - [%(name)s] %(message)s')
 logger = logging.getLogger(__name__)
 

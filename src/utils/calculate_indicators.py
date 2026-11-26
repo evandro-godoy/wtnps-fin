@@ -19,8 +19,10 @@ from sqlalchemy import text
 from src.database.db import get_engine, get_session
 from src.database.repository import AssetsRatesRepository
 from src.analysis.context_analyzer import MarketContextAnalyzer
+from src.utils.timezone import configure_logging_timezone
 
 # Configure logging
+configure_logging_timezone()
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - [%(name)s] %(message)s'

@@ -18,6 +18,7 @@ from tensorflow.keras.layers import LSTM, Dense, Dropout # type: ignore
 from tensorflow.keras.callbacks import EarlyStopping # type: ignore
 
 from src.strategies.base import BaseStrategy
+from src.utils.timezone import configure_logging_timezone
 
 # --- Exceção Customizada para Erro de Shape ---
 
@@ -41,6 +42,7 @@ class InputShapeValidationError(ValueError):
         super().__init__(message)
 
 # Configuração do logging
+configure_logging_timezone()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # --- Funções Auxiliares ---

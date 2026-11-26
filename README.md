@@ -66,6 +66,19 @@ O projeto utiliza as seguintes tecnologias principais:
 
 O uso do framework é dividido em três etapas principais:
 
+### Horários
+
+O monitor, os logs e os novos registros usam `America/Sao_Paulo`. As colunas
+`DateTime` do banco armazenam a hora local sem indicação de fuso; datas antigas
+não são convertidas automaticamente. Datas sem fuso informadas no backtest são
+interpretadas como horário de São Paulo; datas com offset são convertidas.
+
+O servidor MT5 utilizado pelo projeto fornece os horários dos candles como hora
+local do servidor, mesmo quando seus valores numéricos são rotulados como UTC.
+O provedor interpreta esses valores e caches MT5 antigos como hora de São Paulo,
+sem subtrair três horas. Caso o servidor da corretora use outro fuso, essa
+premissa deve ser revista antes de utilizar seus dados.
+
 Os modelos do banco podem ser executados diretamente a partir da raiz do projeto
 com `poetry run python src/database/models.py`. Esse módulo apenas define os
 modelos; ele não cria o banco de dados.

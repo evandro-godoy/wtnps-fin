@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,6 +11,7 @@ from configs.config import DEFAULT_SYMBOL, DEFAULT_TIMEFRAME
 from src.backtest.engine import BacktestConfig, BacktestEngine
 from src.database import get_db
 from src.database.models import BacktestRun, BacktestTrade
+from src.utils.timezone import as_sao_paulo, sao_paulo_now
 
 router = APIRouter()
 
@@ -42,10 +43,10 @@ async def api_backtest_run(
     db: Session = Depends(get_db),
 ) -> JSONResponse:
     try:
-        now = datetime.now(timezone.utc)
-        end_dt = datetime.fromisoformat(end).replace(tzinfo=timezone.utc) if end else now
+        now = sao_paulo_now()
+        end_dt = as_sao_paulo(datetime.fromisoformat(end)) if end else now
         start_dt = (
-            datetime.fromisoformat(start).replace(tzinfo=timezone.utc)
+            as_sao_paulo(datetime.fromisoformat(start))
             if start
             else end_dt - pd.Timedelta(days=90)
         )
@@ -87,8 +88,8 @@ async def api_backtest_run_get(run_id: int, db: Session = Depends(get_db)) -> JS
         trades_payload.append(
             {
                 "id": trade.id,
-                "entry_time": trade.entry_time.isoformat(),
-                "exit_time": trade.exit_time.isoformat() if trade.exit_time else None,
+                "entry_time": as_sao_paulo(trade.entry_time).isoformat(),
+                "exit_time": as_sao_paulo(trade.exit_time).isoformat() if trade.exit_time else None,
                 "direction": trade.direction,
                 "entry_price": trade.entry_price,
                 "exit_price": trade.exit_price,
@@ -103,8 +104,8 @@ async def api_backtest_run_get(run_id: int, db: Session = Depends(get_db)) -> JS
             "run_id": run.id,
             "symbol": run.symbol,
             "timeframe": run.timeframe,
-            "start_date": run.start_date.isoformat(),
-            "end_date": run.end_date.isoformat(),
+            "start_date": as_sao_paulo(run.start_date).isoformat(),
+            "end_date": as_sao_paulo(run.end_date).isoformat(),
             "strategy": run.strategy,
             "initial_capital": run.initial_capital,
             "final_capital": run.final_capital,

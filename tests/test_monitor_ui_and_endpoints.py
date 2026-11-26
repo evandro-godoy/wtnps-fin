@@ -150,7 +150,7 @@ def test_ohlc_indicators_use_200_prior_candles(monkeypatch, available, expected)
     assert ("warning" in result) == (expected < 150)
     if expected:
         first = result["data"][0]
-        assert first["time"] == index[200].isoformat()
+        assert first["time"] == index[200].tz_convert("America/Sao_Paulo").isoformat()
         assert first["ema_9"] == pytest.approx(calculate_ema(close, 9).iloc[200])
         assert first["ema_20"] == pytest.approx(calculate_ema(close, 20).iloc[200])
         assert first["sma_50"] == pytest.approx(calculate_sma(close, 50).iloc[200])

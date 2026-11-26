@@ -8,6 +8,7 @@ from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
 
 from src.data_handler.hybrid_data_loader import get_hybrid_candles
+from src.utils.timezone import as_sao_paulo
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ def build_ohlc_records(df: pd.DataFrame) -> list[dict[str, Any]]:
     for ts, row in df.iterrows():
         records.append(
             {
-                "time": ts.isoformat(),
+                "time": as_sao_paulo(ts).isoformat(),
                 "open": float(row["open"]),
                 "high": float(row["high"]),
                 "low": float(row["low"]),

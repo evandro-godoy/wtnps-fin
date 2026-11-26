@@ -13,6 +13,7 @@ from src.database import get_db
 from src.database.repository import MarketAnalysisRepository
 from src.services.ohlc_service import build_ohlc_records
 from src.utils.indicators import add_basic_indicators
+from src.utils.timezone import as_sao_paulo
 
 router = APIRouter()
 
@@ -97,7 +98,7 @@ async def api_analysis(
         "symbol": symbol,
         "timeframe": timeframe,
         "candles_analyzed": len(df),
-        "timestamp": timestamp.isoformat(),
+        "timestamp": as_sao_paulo(timestamp).isoformat(),
         "analysis": context,
     }
 
@@ -127,7 +128,7 @@ async def api_combined(
         "symbol": symbol,
         "timeframe": timeframe,
         "count": len(records),
-        "timestamp": df.index[-1].isoformat() if not df.empty else None,
+        "timestamp": as_sao_paulo(df.index[-1]).isoformat() if not df.empty else None,
         "latest": records[-1] if records else None,
         "ohlc": records,
         "analysis": context,

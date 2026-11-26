@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from src.api.dependencies import get_state_from_websocket
+from src.utils.timezone import sao_paulo_now
 
 router = APIRouter()
 
@@ -49,7 +49,7 @@ async def websocket_monitor(websocket: WebSocket):
                     {
                         "type": "frequency_ack",
                         "mode": active_mode,
-                        "timestamp": datetime.now().isoformat(),
+                        "timestamp": sao_paulo_now().isoformat(),
                     }
                 )
                 continue
@@ -58,7 +58,7 @@ async def websocket_monitor(websocket: WebSocket):
                 {
                     "type": "pong",
                     "mode": active_mode,
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": sao_paulo_now().isoformat(),
                 }
             )
     except WebSocketDisconnect:

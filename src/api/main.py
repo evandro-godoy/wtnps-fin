@@ -3,6 +3,10 @@ from __future__ import annotations
 
 import logging
 
+from src.utils.timezone import configure_logging_timezone
+
+configure_logging_timezone()
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware

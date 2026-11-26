@@ -6,6 +6,8 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+from src.utils.timezone import market_index
+
 logger = logging.getLogger(__name__)
 
 _EMPTY_CHART_HTML = (
@@ -25,6 +27,7 @@ def build_chart_components(df: pd.DataFrame) -> tuple[str, str]:
         return "", _EMPTY_CHART_HTML
 
     try:
+        chart_index = market_index(pd.DatetimeIndex(df.index)).tz_localize(None)
         fig = make_subplots(
             rows=2,
             cols=1,
@@ -35,7 +38,7 @@ def build_chart_components(df: pd.DataFrame) -> tuple[str, str]:
 
         fig.add_trace(
             go.Candlestick(
-                x=df.index,
+                x=chart_index,
                 open=df["open"],
                 high=df["high"],
                 low=df["low"],
@@ -48,7 +51,7 @@ def build_chart_components(df: pd.DataFrame) -> tuple[str, str]:
 
         if "volume" in df.columns:
             fig.add_trace(
-                go.Bar(x=df.index, y=df["volume"], name="Volume", marker_color="#6c8ebf"),
+                go.Bar(x=chart_index, y=df["volume"], name="Volume", marker_color="#6c8ebf"),
                 row=2,
                 col=1,
             )

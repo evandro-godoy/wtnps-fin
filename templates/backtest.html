@@ -12,10 +12,10 @@
         <label>Timeframe
             <input type="text" id="bt-timeframe" value="M5">
         </label>
-        <label>Início
+        <label>Início (São Paulo)
             <input type="datetime-local" id="bt-start" value="{{ default_start }}">
         </label>
-        <label>Fim
+        <label>Fim (São Paulo)
             <input type="datetime-local" id="bt-end" value="{{ default_end }}">
         </label>
         <label>Capital inicial
@@ -40,8 +40,8 @@ document.getElementById('backtest-form').addEventListener('submit', async (event
     resultBox.textContent = 'Executando...';
 
     const params = new URLSearchParams({ symbol, timeframe, initial_capital });
-    if (start) params.set('start', new Date(start).toISOString());
-    if (end) params.set('end', new Date(end).toISOString());
+    if (start) params.set('start', start);
+    if (end) params.set('end', end);
 
     try {
         const response = await fetch(`/api/backtest/run?${params.toString()}`, { method: 'POST' });
